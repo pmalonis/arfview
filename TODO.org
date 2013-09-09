@@ -1,5 +1,6 @@
-* TODO export wav files
-* TODO plot event records
-* TODO enable adjustment of spectrogram
-* TODO enable the modification and creation of attributes
-* TODO enable labeling
+* todo list:
+** TODO export wav files
+** TODO plot event records
+** TODO enable adjustment of spectrogram
+** TODO enable the modification and creation of attributes
+** TODO enable labeling
