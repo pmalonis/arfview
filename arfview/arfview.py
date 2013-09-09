@@ -105,6 +105,7 @@ class MainWindow(QtGui.QMainWindow):
         def recursivePopulateTree(parent_node, data):
             tree_node = QtGui.QTreeWidgetItem([data.name])
             #tree_node.setData(0, QtCore.Qt.UserRole, data)
+            tree_node.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
             parent_node.addChild(tree_node)
             if type(data) == h5py._hl.group.Group:
                 for item in data.itervalues():
