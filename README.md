@@ -5,13 +5,13 @@ Arfview is a data visualization program for use with data in the [arf](https://g
 
 Installation (Linux and OS X)
 ------------
-* install [Anaconda](https://store.continuum.io/cshop/anaconda/)
-* install arfview:
+  * install [Anaconda](https://store.continuum.io/cshop/anaconda/)
+  * install arfview:
 
+        git clone https://github.com/kylerbrown/arfview.git
+        cd arfview
+        python setup.py install
 
-    git clone https://github.com/kylerbrown/arfview.git
-    cd arfview
-    python setup.py install
 
 Starting arfview:
 -----------------
