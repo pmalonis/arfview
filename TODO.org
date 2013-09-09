@@ -4,3 +4,4 @@
 ** TODO enable adjustment of spectrogram
 ** TODO enable the modification and creation of attributes
 ** TODO enable labeling
+** TODO Add checkboxes to entry subitems to filter the plotted data.
