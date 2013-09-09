@@ -151,8 +151,8 @@ def plot_data(item, data_layout):
             else:
                 pl.setXLink(masterXLink)
 
-        for dataset in sampled_datasets:
-            if dataset.attrs['datatype'] == 1:
+        for dataset in sampled_datasets: # Plot spectrograms
+            if dataset.attrs['datatype'] in [0, 1]:
                 sr = float(dataset.attrs['sampling_rate'])
                 Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=512, noverlap=400)
                 img = pg.ImageItem(np.log(Pxx.T))
