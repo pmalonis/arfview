@@ -40,7 +40,6 @@ setup(
     author='Kyler Brown',
     tests_require=['pytest'],
     install_requires=['pyqtgraph>=0.9.7',
-                      'pyside>=1.2.1',
                       'h5py>=2.2.0b1',
                       'scipy>=0.12.0',
                       'matplotlib>=1.3.0',
