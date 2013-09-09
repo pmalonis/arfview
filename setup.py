@@ -40,10 +40,6 @@ setup(
     author='Kyler Brown',
     tests_require=['pytest'],
     install_requires=['pyqtgraph>=0.9.7',
-                      'h5py>=2.2.0b1',
-                      'scipy>=0.12.0',
-                      'matplotlib>=1.3.0',
-                      'numpy>=1.7.1'
                     ],
     cmdclass={'test': PyTest},
     author_email='kylerjbrown@gmail.com',
