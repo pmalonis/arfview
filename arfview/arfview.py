@@ -28,19 +28,19 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage('Ready')
 
         # actions
-        soundAction = QtGui.QAction(QtGui.QIcon('icons/sound.svg'),
+        soundAction = QtGui.QAction(QtGui.QIcon.fromTheme('media-playback-start'),
                                     'PlaySound', self)
         soundAction.setShortcut('Ctrl+S')
         soundAction.setStatusTip('Play data as sound')
         soundAction.triggered.connect(self.playSound)
         exitAction = QtGui.\
-            QAction(QtGui.QIcon('icons/system-shutdown-panel.svg'),
+            QAction(QtGui.QIcon.fromTheme('window-close'),
                     'Exit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
         exitAction.triggered.connect(QtGui.qApp.quit)
         openAction = QtGui.\
-            QAction(QtGui.QIcon('icons/document-open.svg'), 'Open', self)
+            QAction(QtGui.QIcon.fromTheme('document-open'), 'Open', self)
         openAction.setShortcut('Ctrl+O')
         openAction.setStatusTip('Open an arf file')
         openAction.triggered.connect(self.showDialog)
@@ -116,7 +116,9 @@ class MainWindow(QtGui.QMainWindow):
         root = f["/"]
         #topnode.setData(0, QtCore.Qt.UserRole, root)
         self.tree_view.addTopLevelItem(topnode)
-        for item in root.itervalues():
+        sorted_names = sorted([b.name for b in root.values()])
+        sorted_entries = [root[b] for b in sorted_names]
+        for item in sorted_entries:
             recursivePopulateTree(topnode, item)
 
 
