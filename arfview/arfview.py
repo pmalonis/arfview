@@ -12,13 +12,14 @@ import h5py
 import numpy as np
 from matplotlib.mlab import specgram
 from scipy.io import wavfile
-
+import os.path
 
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
     def __init__(self):
         super(MainWindow, self).__init__()
         self.current_file = None
+        self.open_files = []    # TODO replace current_file with list
         self.initUI()
 
     def initUI(self):
@@ -44,17 +45,28 @@ class MainWindow(QtGui.QMainWindow):
         openAction.setShortcut('Ctrl+O')
         openAction.setStatusTip('Open an arf file')
         openAction.triggered.connect(self.showDialog)
+
+        exportAction = QtGui.QAction(QtGui.QIcon.fromTheme('document-save-as'),
+                                    'Export data', self)
+        exportAction.setShortcut('Ctrl+e')
+        exportAction.setStatusTip('Export dataset as wav')
+        exportAction.triggered.connect(self.export)
+
+        
         # menubar
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
         fileMenu.addAction(openAction)
 
+
+
         # toolbar
         self.toolbar = self.addToolBar('Toolbar')
         self.toolbar.addAction(exitAction)
         self.toolbar.addAction(openAction)
         self.toolbar.addAction(soundAction)
+        self.toolbar.addAction(exportAction)
 
         # file tree
         self.tree_view = QtGui.QTreeWidget()
@@ -84,6 +96,21 @@ class MainWindow(QtGui.QMainWindow):
         self.resize(1000, 500)
         self.show()
 
+
+    def export(self):
+        treeItem = self.tree_view.currentItem()
+        item = self.current_file[treeItem.text(0)]
+        savedir = os.path.dirname(self.current_file_name)
+        if type(item) == h5py._hl.dataset.Dataset:
+            fname, fileextension = QtGui.QFileDialog.\
+                                   getSaveFileName(self, 'Save data as',
+                                                   os.path.join(savedir,
+                                                                item.name),
+                                                   'wav (*.wav);;dat (*.dat)')
+            export(item, fileextension.split(' ')[0], fname)
+
+
+
     def playSound(self):
         pass
         #item = self.current_file[treeItem.text(0)]
@@ -98,6 +125,7 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage("%s opened" % (fname))
         self.current_file = h5py.File(str(fname))
         self.populateTree()
+        self.current_file_name = fname
 
     def populateTree(self):
         f = self.current_file
@@ -126,6 +154,7 @@ class MainWindow(QtGui.QMainWindow):
         item = self.current_file[treeItem.text(0)]
         populateAttrTable(self.attr_table, item)
         plot_data(item, self.data_layout)
+
 
 
 def plot_data(item, data_layout):
@@ -196,9 +225,17 @@ def clicked(plot, points):
     print("clicked points", points)
     for p in points:
         p.setPen('b', width=2)
+        print(dir(p))
     lastClicked = points
 
-
+def export(dataset, export_format='wav', savepath=None):
+    if not savepath:
+        savepath = os.path.basename(dataset.name)
+    if export_format == 'wav':
+        data = np.int16(dataset.value / max(abs(dataset.value)) * (2**15 - 1))
+        wavfile.write(savepath + '.wav', dataset.attrs['sampling_rate'], data)
+    if export_format == 'dat':
+        np.savetxt(savepath + '.dat', dataset)
 
 def playSound(data):
     print('writing wav file')

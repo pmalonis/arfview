@@ -1,8 +1,9 @@
 * todo list:
-** TODO export wav files
+** DONE export wav files
 ** TODO plot event records
 ** TODO enable adjustment of spectrogram
 ** TODO enable the modification and creation of attributes
 ** TODO enable labeling
 ** TODO Add checkboxes to entry subitems to filter the plotted data.
+   partially complete, checkboxes are useless at this point
 ** DONE Sort entries
