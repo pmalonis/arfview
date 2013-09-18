@@ -102,7 +102,7 @@ class MainWindow(QtGui.QMainWindow):
                                    getSaveFileName(self, 'Save data as',
                                                    os.path.join(savedir,
                                                                 item.name),
-                                                   'wav (*.wav);;dat (*.dat)')
+                                                   'wav (*.wav);;text (*.csv, *.dat)')
             export(item, fileextension.split(' ')[0], fname)
 
     def playSound(self):
@@ -209,6 +209,8 @@ def plot_data(item, data_layout):
 
 ## Make all plots clickable
 lastClicked = []
+
+
 def clicked(plot, points):
     global lastClicked
     for p in lastClicked:
@@ -219,20 +221,23 @@ def clicked(plot, points):
         print(dir(p))
     lastClicked = points
 
+
 def export(dataset, export_format='wav', savepath=None):
     if not savepath:
         savepath = os.path.basename(dataset.name)
     if export_format == 'wav':
         data = np.int16(dataset.value / max(abs(dataset.value)) * (2**15 - 1))
         wavfile.write(savepath + '.wav', dataset.attrs['sampling_rate'], data)
-    if export_format == 'dat':
-        np.savetxt(savepath + '.dat', dataset)
+    if export_format == 'text':
+        np.savetxt(savepath + '.csv', dataset)
+
 
 def playSound(data):
     print('writing wav file')
     wavfile.write('temp.wav', data.attrs['sampling_rate'],
                   np.array(data))
 #    os.system('totem temp.wav')
+
 
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
