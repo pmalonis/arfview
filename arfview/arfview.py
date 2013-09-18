@@ -52,14 +52,11 @@ class MainWindow(QtGui.QMainWindow):
         exportAction.setStatusTip('Export dataset as wav')
         exportAction.triggered.connect(self.export)
 
-        
         # menubar
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
         fileMenu.addAction(openAction)
-
-
 
         # toolbar
         self.toolbar = self.addToolBar('Toolbar')
@@ -96,7 +93,6 @@ class MainWindow(QtGui.QMainWindow):
         self.resize(1000, 500)
         self.show()
 
-
     def export(self):
         treeItem = self.tree_view.currentItem()
         item = self.current_file[treeItem.text(0)]
@@ -109,13 +105,10 @@ class MainWindow(QtGui.QMainWindow):
                                                    'wav (*.wav);;dat (*.dat)')
             export(item, fileextension.split(' ')[0], fname)
 
-
-
     def playSound(self):
         pass
         #item = self.current_file[treeItem.text(0)]
         #playSound(item)
-
 
     def showDialog(self):
         fname, fileextension = QtGui.QFileDialog.\
@@ -149,12 +142,10 @@ class MainWindow(QtGui.QMainWindow):
         for item in sorted_entries:
             recursivePopulateTree(topnode, item)
 
-
     def selectEntry(self, treeItem):
         item = self.current_file[treeItem.text(0)]
         populateAttrTable(self.attr_table, item)
         plot_data(item, self.data_layout)
-
 
 
 def plot_data(item, data_layout):
