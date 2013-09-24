@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, \
     print_function, unicode_literals
 from PySide import QtGui, QtCore
+from PySide.QtCore import Qt
 import signal
 import sys
 import pyqtgraph as pg
@@ -13,6 +14,19 @@ import numpy as np
 from matplotlib.mlab import specgram
 from scipy.io import wavfile
 import os.path
+import tempfile
+
+class Model():
+    '''A data object for the data model,
+    self.data must be an arf type entry or dataset'''
+    def __init__(self, data):
+        if type(data) in [h5py.Dataset, h5py.Group]:
+            self.data = data
+        else:
+            raise TypeError     # TODO create and arf type with the data
+    def __call__(self):
+        return self.data
+
 
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
@@ -112,9 +126,8 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def playSound(self):
-        pass
-        #item = self.current_file[treeItem.text(0)]
-        #playSound(item)
+        item = self.tree_view.currentItem().data(0, Qt.UserRole)()
+        playSound(item)
 
 
     def showDialog(self):
@@ -131,18 +144,18 @@ class MainWindow(QtGui.QMainWindow):
         f = self.current_file
 
         def recursivePopulateTree(parent_node, data):
-            tree_node = QtGui.QTreeWidgetItem([data.name])
-            #tree_node.setData(0, QtCore.Qt.UserRole, data)
-            tree_node.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+            tree_node = QtGui.QTreeWidgetItem([data.name, 'plot'])
+            tree_node.setData(0, Qt.UserRole, Model(data))
+            tree_node.setCheckState(1, Qt.CheckState.Unchecked)
             parent_node.addChild(tree_node)
             if type(data) == h5py._hl.group.Group:
                 for item in data.itervalues():
                     recursivePopulateTree(tree_node, item)
 
         # add root
-        topnode = QtGui.QTreeWidgetItem(["/"])
+        topnode = QtGui.QTreeWidgetItem([f.filename])
         root = f["/"]
-        #topnode.setData(0, QtCore.Qt.UserRole, root)
+        topnode.setData(0, Qt.UserRole, Model(root))
         self.tree_view.addTopLevelItem(topnode)
         sorted_names = sorted([b.name for b in root.values()])
         sorted_entries = [root[b] for b in sorted_names]
@@ -151,7 +164,8 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def selectEntry(self, treeItem):
-        item = self.current_file[treeItem.text(0)]
+        item = treeItem.data(0, Qt.UserRole)()
+        #item = self.current_file[treeItem.text(0)]
         populateAttrTable(self.attr_table, item)
         plot_data(item, self.data_layout)
 
@@ -160,10 +174,10 @@ class MainWindow(QtGui.QMainWindow):
 def plot_data(item, data_layout):
         data_layout.clear()
         subplots = []
-        if type(item) == h5py._hl.dataset.Dataset:
+        if type(item) == h5py.Dataset:
             datasets = [item]
         else:
-            datasets = [x for x in item.values() if type(x) == h5py._hl.dataset.Dataset]
+            datasets = [x for x in item.values() if type(x) == h5py.Dataset]
         sampled_datasets = [x for x in datasets
                             if 'datatype' in x.attrs.keys() and x.attrs['datatype'] < 1000]
         event_datasets = [x for x in datasets
@@ -239,9 +253,10 @@ def export(dataset, export_format='wav', savepath=None):
 
 def playSound(data):
     print('writing wav file')
-    wavfile.write('temp.wav', data.attrs['sampling_rate'],
+    tfile = tempfile.mktemp() + '.wav'
+    wavfile.write(tfile, data.attrs['sampling_rate'],
                   np.array(data))
-#    os.system('totem temp.wav')
+    os.system('play ' + tfile +  ' &')
 
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
