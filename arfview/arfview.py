@@ -249,8 +249,9 @@ def export(dataset, export_format='wav', savepath=None):
 def playSound(data):
     print('writing wav file')
     tfile = tempfile.mktemp() + '.wav'
+    normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
-                  np.array(data))
+                  normed_data)
     os.system('play ' + tfile +  ' &')
 
 
