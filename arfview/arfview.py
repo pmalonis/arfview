@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division, \
     print_function, unicode_literals
 from PySide import QtGui, QtCore
-from PySide.QtCore import Qt
 import signal
 import sys
 import pyqtgraph as pg
@@ -15,19 +14,7 @@ from matplotlib.mlab import specgram
 from scipy.io import wavfile
 import os.path
 import tempfile
-
-class Model():
-    '''A data object for the data model,
-    self.data must be an arf type entry or dataset'''
-    def __init__(self, data):
-        if type(data) in [h5py.Dataset, h5py.Group]:
-            self.data = data
-        else:
-            raise TypeError     # TODO create and arf type with the data
-    def __call__(self):
-        return self.data
-
-
+from datatree import DataTreeView
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
     def __init__(self):
@@ -80,7 +67,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addAction(exportAction)
 
         # file tree
-        self.tree_view = QtGui.QTreeWidget()
+        self.tree_view = DataTreeView()
         self.tree_view.currentItemChanged.connect(self.selectEntry)
         if self.current_file:
             self.populateTree()
@@ -108,19 +95,21 @@ class MainWindow(QtGui.QMainWindow):
         self.show()
 
     def export(self):
-        treeItem = self.tree_view.currentItem()
-        item = self.current_file[treeItem.text(0)]
-        savedir = os.path.dirname(self.current_file_name)
+        item = self.tree_view.currentItem().getData()
+        savedir, filename = os.path.split(item.file.filename)
+        savepath =  os.path.join(savedir,
+                                 os.path.splitext(filename)[0] + '_' + item.name.replace('/','_'))
+        print(savepath)
         if type(item) == h5py._hl.dataset.Dataset:
+            print('die')
             fname, fileextension = QtGui.QFileDialog.\
                                    getSaveFileName(self, 'Save data as',
-                                                   os.path.join(savedir,
-                                                                item.name),
+                                                   savepath,
                                                    'wav (*.wav);;text (*.csv, *.dat)')
             export(item, fileextension.split(' ')[0], fname)
 
     def playSound(self):
-        item = self.tree_view.currentItem().data(0, Qt.UserRole)()
+        item = self.tree_view.currentItem().getData()
         playSound(item)
 
     def showDialog(self):
@@ -135,29 +124,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def populateTree(self):
         f = self.current_file
-
-        def recursivePopulateTree(parent_node, data):
-            tree_node = QtGui.QTreeWidgetItem([data.name, 'plot'])
-            tree_node.setData(0, Qt.UserRole, Model(data))
-            tree_node.setCheckState(1, Qt.CheckState.Unchecked)
-            parent_node.addChild(tree_node)
-            if type(data) == h5py._hl.group.Group:
-                for item in data.itervalues():
-                    recursivePopulateTree(tree_node, item)
-
-        # add root
-        topnode = QtGui.QTreeWidgetItem([f.filename])
-        root = f["/"]
-        topnode.setData(0, Qt.UserRole, Model(root))
-        self.tree_view.addTopLevelItem(topnode)
-        sorted_names = sorted([b.name for b in root.values()])
-        sorted_entries = [root[b] for b in sorted_names]
-        for item in sorted_entries:
-            recursivePopulateTree(topnode, item)
+        root = f['/']
+        self.tree_view.recursivePopulateTree(root)
 
     def selectEntry(self, treeItem):
-        item = treeItem.data(0, Qt.UserRole)()
-        #item = self.current_file[treeItem.text(0)]
+        item = treeItem.getData()
         populateAttrTable(self.attr_table, item)
         plot_data(item, self.data_layout)
 
@@ -206,6 +177,8 @@ def plot_data(item, data_layout):
         for dataset in event_datasets:
             if dataset.attrs['units'] == 'ms':
                 data = dataset.value / 1000.
+            elif dataset.attrs['units'] == 'samples':
+                data = dataset.value / dataset.attrs['sampling_rate']
             else:
                 data = dataset.value
             w = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
