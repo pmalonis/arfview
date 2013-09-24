@@ -66,14 +66,11 @@ class MainWindow(QtGui.QMainWindow):
         exportAction.setStatusTip('Export dataset as wav')
         exportAction.triggered.connect(self.export)
 
-        
         # menubar
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
         fileMenu.addAction(openAction)
-
-
 
         # toolbar
         self.toolbar = self.addToolBar('Toolbar')
@@ -110,7 +107,6 @@ class MainWindow(QtGui.QMainWindow):
         self.resize(1000, 500)
         self.show()
 
-
     def export(self):
         treeItem = self.tree_view.currentItem()
         item = self.current_file[treeItem.text(0)]
@@ -120,15 +116,12 @@ class MainWindow(QtGui.QMainWindow):
                                    getSaveFileName(self, 'Save data as',
                                                    os.path.join(savedir,
                                                                 item.name),
-                                                   'wav (*.wav);;dat (*.dat)')
+                                                   'wav (*.wav);;text (*.csv, *.dat)')
             export(item, fileextension.split(' ')[0], fname)
-
-
 
     def playSound(self):
         item = self.tree_view.currentItem().data(0, Qt.UserRole)()
         playSound(item)
-
 
     def showDialog(self):
         fname, fileextension = QtGui.QFileDialog.\
@@ -162,13 +155,11 @@ class MainWindow(QtGui.QMainWindow):
         for item in sorted_entries:
             recursivePopulateTree(topnode, item)
 
-
     def selectEntry(self, treeItem):
         item = treeItem.data(0, Qt.UserRole)()
         #item = self.current_file[treeItem.text(0)]
         populateAttrTable(self.attr_table, item)
         plot_data(item, self.data_layout)
-
 
 
 def plot_data(item, data_layout):
@@ -232,6 +223,8 @@ def plot_data(item, data_layout):
 
 ## Make all plots clickable
 lastClicked = []
+
+
 def clicked(plot, points):
     global lastClicked
     for p in lastClicked:
@@ -242,14 +235,16 @@ def clicked(plot, points):
         print(dir(p))
     lastClicked = points
 
+
 def export(dataset, export_format='wav', savepath=None):
     if not savepath:
         savepath = os.path.basename(dataset.name)
     if export_format == 'wav':
         data = np.int16(dataset.value / max(abs(dataset.value)) * (2**15 - 1))
         wavfile.write(savepath + '.wav', dataset.attrs['sampling_rate'], data)
-    if export_format == 'dat':
-        np.savetxt(savepath + '.dat', dataset)
+    if export_format == 'text':
+        np.savetxt(savepath + '.csv', dataset)
+
 
 def playSound(data):
     print('writing wav file')
@@ -257,6 +252,7 @@ def playSound(data):
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   np.array(data))
     os.system('play ' + tfile +  ' &')
+
 
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
