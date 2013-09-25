@@ -14,7 +14,7 @@ from matplotlib.mlab import specgram
 from scipy.io import wavfile
 import os.path
 import tempfile
-from datatree import DataTreeView
+from arfview.datatree import DataTreeView
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2 bug
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''

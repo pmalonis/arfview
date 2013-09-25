@@ -2,5 +2,24 @@
 arfview is a program for viewing arf files
 '''
 
-__all__ = ['arfview']
+import arfview
+__all__ = ['arfview', 'datatree']
 __version__ = '0.1'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
