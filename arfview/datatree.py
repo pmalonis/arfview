@@ -11,10 +11,16 @@ from datetime import datetime
 from dateutil import tz
 import h5py
 
+named_types = {0 : 'UNDEFINED', 1 : 'ACOUSTIC', 2 : 'EXTRAC_HP', 3 : 'EXTRAC_LF',
+               4 : 'EXTRAC_EEG', 5 : 'INTRAC_CC', 6 : 'INTRAC_VC',
+               1000 : 'EVENT',
+               1001 : 'SPIKET',
+               1002 : 'BEHAVET',
+               2000 : 'INTERVAL',
+               2001 : 'STIMI',
+               2002 : 'COMPONENTL'}
 
 def get_str_type(h5Object):
-    named_types = {0 : 'UNDEFINED', 1 : 'ACOUSTIC', 2 : 'EXTRAC_HP', 3 : 'EXTRAC_LF',
-                           4 : 'EXTRAC_EEG', 5 : 'INTRAC_CC', 6 : 'INTRAC_VC'}
     if type(h5Object) == h5py.Dataset:
         if h5Object.attrs['datatype'] in named_types.keys():
             return named_types[h5Object.attrs['datatype']]
@@ -28,7 +34,7 @@ def get_str_time(entry):
         return('foo')
     time = datetime.fromtimestamp(entry.attrs['timestamp'][0] + entry.attrs['timestamp'][1] * 1e-6,
                                   tz.tzutc()).astimezone(tz.tzlocal())
-    return time.strftime('%y-%m-%d, %H:%M:%S:%f')
+    return time.strftime('%Y-%m-%d, %H:%M:%S:%f')
 
 
 class Model():
