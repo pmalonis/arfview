@@ -165,7 +165,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def refresh_data_view(self):
         checked_datasets = self.tree_view.all_checked_dataset_elements()
-        if len(checked_datasets) > 0:
+        if len(checked_datasets) > 0 and self.plotchecked:
             plot_dataset_list(checked_datasets, self.data_layout)
         else:
             item = self.tree_view.currentItem().getData()
