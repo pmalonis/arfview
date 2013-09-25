@@ -12,6 +12,11 @@ Installation (Linux and OS X)
         cd arfview
         python setup.py install
 
+To have audio playback, install [sox](http://sox.sourceforge.net/)
+
+You may also need build dependencies for PySide and HDF5. In Ubuntu/Debian:
+
+    sudo apt-get build-dep python-pyside python-h5py
 
 Starting arfview:
 -----------------
