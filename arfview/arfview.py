@@ -63,6 +63,12 @@ class MainWindow(QtGui.QMainWindow):
         plotcheckedAction.triggered.connect(self.toggleplotchecked)
         self.plotcheckedAction = plotcheckedAction
 
+        refreshAction = QtGui.QAction(QtGui.QIcon.fromTheme('view-refresh'),
+                                      'Refresh Data View', self)
+        refreshAction.setShortcut('Ctrl+r')
+        refreshAction.setStatusTip('Refresh Data View')
+        refreshAction.triggered.connect(self.refresh_data_view)
+
         # menubar
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
@@ -70,6 +76,7 @@ class MainWindow(QtGui.QMainWindow):
         fileMenu.addAction(openAction)
         fileMenu.addAction(exportAction)
         fileMenu.addAction(plotcheckedAction)
+        fileMenu.addAction(refreshAction)
 
         # toolbar
         self.toolbar = self.addToolBar('Toolbar')
@@ -78,6 +85,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addAction(soundAction)
         self.toolbar.addAction(exportAction)
         self.toolbar.addAction(plotcheckedAction)
+        self.toolbar.addAction(refreshAction)
 
         # file tree
         self.tree_view = DataTreeView()
@@ -156,18 +164,23 @@ class MainWindow(QtGui.QMainWindow):
         root = f['/']
         self.tree_view.recursivePopulateTree(root)
 
-    def selectEntry(self, treeItem):
-        item = treeItem.getData()
-        populateAttrTable(self.attr_table, item)
-        if not self.plotchecked:
+    def refresh_data_view(self):
+        checked_datasets = self.tree_view.all_checked_dataset_elements()
+        if len(checked_datasets) > 0:
+            plot_dataset_list(checked_datasets, self.data_layout)
+        else:
+            item = self.tree_view.currentItem().getData()
             if type(item) == h5py.Dataset:
                 datasets = [item]
             else:
                 datasets = [x for x in item.values() if type(x) == h5py.Dataset]
             plot_dataset_list(datasets, self.data_layout)
-        else:
-            checked_datasets = self.tree_view.all_checked_dataset_elements()
-            plot_dataset_list(checked_datasets, self.data_layout)
+
+
+    def selectEntry(self, treeItem):
+        item = treeItem.getData()
+        populateAttrTable(self.attr_table, item)
+        self.refresh_data_view()
 
 '''
 def plot_item(item, data_layout):
