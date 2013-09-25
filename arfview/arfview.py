@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, \
     print_function, unicode_literals
 from PySide import QtGui, QtCore
+from PySide.QtCore import Qt
 import signal
 import sys
 import pyqtgraph as pg
@@ -15,12 +16,14 @@ from scipy.io import wavfile
 import os.path
 import tempfile
 from datatree import DataTreeView
+QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2 bug
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
     def __init__(self):
         super(MainWindow, self).__init__()
         self.current_file = None
         self.open_files = []    # TODO replace current_file with list
+        self.plotchecked = False
         self.initUI()
 
     def initUI(self):
@@ -53,11 +56,20 @@ class MainWindow(QtGui.QMainWindow):
         exportAction.setStatusTip('Export dataset as wav')
         exportAction.triggered.connect(self.export)
 
+        plotcheckedAction = QtGui.QAction(QtGui.QIcon.fromTheme('face-smile'),
+                                          'Plot checked', self)
+        plotcheckedAction.setShortcut('Ctrl+k')
+        plotcheckedAction.setStatusTip('plot checked')
+        plotcheckedAction.triggered.connect(self.toggleplotchecked)
+        self.plotcheckedAction = plotcheckedAction
+
         # menubar
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
         fileMenu.addAction(openAction)
+        fileMenu.addAction(exportAction)
+        fileMenu.addAction(plotcheckedAction)
 
         # toolbar
         self.toolbar = self.addToolBar('Toolbar')
@@ -65,6 +77,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addAction(openAction)
         self.toolbar.addAction(soundAction)
         self.toolbar.addAction(exportAction)
+        self.toolbar.addAction(plotcheckedAction)
 
         # file tree
         self.tree_view = DataTreeView()
@@ -74,6 +87,7 @@ class MainWindow(QtGui.QMainWindow):
 
         #attribute table
         self.attr_table = QtGui.QTableWidget(10, 2)
+        self.attr_table.setHorizontalHeaderLabels(('key','value'))
 
         #plot region
         self.data_layout = pg.GraphicsLayoutWidget()
@@ -93,6 +107,21 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle('arfview')
         self.resize(1000, 500)
         self.show()
+
+    def toggleplotchecked(self):
+        self.plotchecked = not self.plotchecked
+        print('plot checked: ' + str(self.plotchecked))
+        if self.plotchecked:
+            self.plotcheckedAction.setIcon(QtGui.QIcon.fromTheme('face-cool'))
+            self.plotcheckedAction.setStatusTip('click to turn check mode off')
+            self.plotcheckedAction.setText('check mode is on')
+            self.plotcheckedAction.setIconText('check mode is on')
+        else:
+            self.plotcheckedAction.setIcon(QtGui.QIcon.fromTheme('face-smile'))
+            self.plotcheckedAction.setStatusTip('click to turn check mode on')
+            self.plotcheckedAction.setText('check mode is off')
+            self.plotcheckedAction.setIconText('check mode is off')
+
 
     def export(self):
         item = self.tree_view.currentItem().getData()
@@ -130,21 +159,26 @@ class MainWindow(QtGui.QMainWindow):
     def selectEntry(self, treeItem):
         item = treeItem.getData()
         populateAttrTable(self.attr_table, item)
-        plot_data(item, self.data_layout)
-
-
-def plot_data(item, data_layout):
-        data_layout.clear()
-        subplots = []
-        if type(item) == h5py.Dataset:
-            datasets = [item]
+        if not self.plotchecked:
+            if type(item) == h5py.Dataset:
+                datasets = [item]
+            else:
+                datasets = [x for x in item.values() if type(x) == h5py.Dataset]
+            plot_dataset_list(datasets, self.data_layout)
         else:
-            datasets = [x for x in item.values() if type(x) == h5py.Dataset]
+            checked_datasets = self.tree_view.all_checked_dataset_elements()
+            plot_dataset_list(checked_datasets, self.data_layout)
+
+'''
+def plot_item(item, data_layout):
+
+
         sampled_datasets = [x for x in datasets
                             if 'datatype' in x.attrs.keys() and x.attrs['datatype'] < 1000]
-        event_datasets = [x for x in datasets
-                          if 'datatype' in x.attrs.keys() and x.attrs['datatype'] >= 1000
-                          and len(x) > 0]
+        simple_event_datasets = [x for x in datasets
+                                  if 'datatype' in x.attrs.keys() and is_simple_event(x)]
+        complex_event_datasets = [x for x in datasets
+                                  if 'datatype' in x.attrs.keys() and is_complex_event(x)]
 
         for dataset in sampled_datasets:
             sr = float(dataset.attrs['sampling_rate'])
@@ -174,7 +208,7 @@ def plot_data(item, data_layout):
                 vb.setMouseEnabled(x=True, y=False)
                 vb.setXLink(masterXLink)
 
-        for dataset in event_datasets:
+        for dataset in simple_event_datasets:
             if dataset.attrs['units'] == 'ms':
                 data = dataset.value / 1000.
             elif dataset.attrs['units'] == 'samples':
@@ -194,6 +228,101 @@ def plot_data(item, data_layout):
             else:
                 w.setXLink(masterXLink)
 
+
+        for dataset in complex_event_datasets:
+            if dataset.attrs['units'] == 'ms':
+                data = dataset.value / 1000.
+            elif dataset.attrs['units'] == 'samples':
+                data = dataset.value / dataset.attrs['sampling_rate']
+            else:
+                data = dataset.value
+            w = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
+                                    row=len(subplots), col=0)
+            subplots.append(w)
+            for tup in dataset:
+                label = tup['name']
+                start = tup['start']
+                stop = tup['stop']
+                if start == stop:
+                    w.addItem(pg.TextItem(label, fill=(255, 255, 255, 100)), anchor=start)
+                else:
+                    w.addItem(pg.TextItem(label, color=(0, 255, 0, 100)), anchor=start)
+                    w.addItem(pg.TextItem(label, color=(255, 0, 0, 100)), anchor=stop)
+'''
+
+def plot_dataset_list(dataset_list, data_layout):
+    ''' plots a list of datasets to a data layout'''
+    data_layout.clear()
+    subplots = []
+    for dataset in dataset_list:
+
+        '''sampled data'''
+        if dataset.attrs['datatype'] < 1000: # sampled data
+            sr = float(dataset.attrs['sampling_rate'])
+            t = np.arange(0, len(dataset)) / sr
+            pl = data_layout.addPlot(title=dataset.name,
+                                          name=str(len(subplots)), row=len(subplots), col=0)
+            subplots.append(pl)
+            pl.plot(t, dataset)
+            pl.showGrid(x=True, y=True)
+
+            ''' simple events '''
+        if is_simple_event(dataset):
+            if dataset.attrs['units'] == 'ms':
+                data = dataset.value / 1000.
+            elif dataset.attrs['units'] == 'samples':
+                data = dataset.value / dataset.attrs['sampling_rate']
+            else:
+                data = dataset.value
+            pl = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
+                                    row=len(subplots), col=0)
+            subplots.append(pl)
+            s = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 120))
+            spots = [{'pos': (i, 0), 'data': 1} for i in data]
+            s.addPoints(spots)
+            pl.addItem(s)
+            s.sigClicked.connect(clicked)
+
+            ''' complex event '''
+        if is_complex_event(dataset):
+            if dataset.attrs['units'] == 'ms':
+                data = dataset.value / 1000.
+            elif dataset.attrs['units'] == 'samples':
+                data = dataset.value / dataset.attrs['sampling_rate']
+            else:
+                data = dataset.value
+            pl = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
+                                    row=len(subplots), col=0)
+            subplots.append(pl)
+            for tup in dataset:
+                label = tup['name']
+                start = tup['start']
+                stop = tup['stop']
+                if start == stop:
+                    pl.addItem(pg.TextItem(label, fill=(255, 255, 255, 100)), anchor=start)
+                else:
+                    pl.addItem(pg.TextItem(label, color=(0, 255, 0, 100)), anchor=start)
+                    pl.addItem(pg.TextItem(label, color=(255, 0, 0, 100)), anchor=stop)
+
+        '''linking x axes'''
+        if len(subplots) == 1:
+            masterXLink = pl
+        else:
+            pl.setXLink(masterXLink)
+        '''adding spectrograms'''
+        if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
+            Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=512, noverlap=400)
+            img = pg.ImageItem(np.log(Pxx.T))
+            #img.setLevels((-5, 10))
+            img.setScale(ts[-1] / Pxx.shape[1])
+            vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
+            subplots.append(vb)
+            g = pg.GridItem()
+            vb.addItem(g)
+            vb.addItem(img)
+            vb.setMouseEnabled(x=True, y=False)
+            vb.setXLink(masterXLink)
+
 ## Make all plots clickable
 lastClicked = []
 
@@ -207,6 +336,16 @@ def clicked(plot, points):
         p.setPen('b', width=2)
         print(dir(p))
     lastClicked = points
+
+def is_simple_event(dataset):
+    if dataset.attrs['datatype'] > 1000 and dataset.value.dtype.names is None:
+        return True
+    else:
+        return False
+
+def is_complex_event(dataset):
+    if dataset.attrs['datatype'] > 1000 and dataset.value.dtype.names is None:
+        pass
 
 
 def export(dataset, export_format='wav', savepath=None):
@@ -231,6 +370,7 @@ def playSound(data):
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
     table.setRowCount(len(item.attrs.keys()))
+
 
     for row, (key, value) in enumerate(item.attrs.iteritems()):
         attribute = QtGui.QTableWidgetItem(str(key))

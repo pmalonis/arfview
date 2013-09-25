@@ -58,7 +58,6 @@ class DataTreeItem(QtGui.QTreeWidgetItem):
     def __init__(self, data, *args, **kwargs):
         super(DataTreeItem, self).__init__(*args, **kwargs)
         self.setData(0, Qt.UserRole, Model(data))
-        self.setCheckState(1, Qt.CheckState.Unchecked)
 
     def getData(self):
         ''' use this to access the arf data in a DataTreeItem '''
@@ -69,8 +68,8 @@ class DataTreeView(QtGui.QTreeWidget):
     ''' a tree for storing data, both in hdf5 and other formats '''
     def __init__(self, *args, **kwargs):
         super(DataTreeView, self).__init__(*args, **kwargs)
-        self.setColumnCount(5)
-        self.setHeaderLabels(('Name', 'Plot', 'Type', 'Time', 'File'))
+        self.setColumnCount(4)
+        self.setHeaderLabels(('Name', 'Type', 'Time', 'File'))
 
     def add(self, data, parent_node=None):
         '''creates a DataTreeItem from data and returns it'''
@@ -80,9 +79,10 @@ class DataTreeView(QtGui.QTreeWidget):
             str_time = get_str_time(data)
         else: str_time = ''
         fname = data.file.filename
-        tree_node = DataTreeItem(data, [data.name, '', str_type, str_time, fname])
+        tree_node = DataTreeItem(data, [data.name, str_type, str_time, fname])
         tree_node.setData(0, Qt.UserRole, Model(data))
-        tree_node.setCheckState(1, Qt.CheckState.Unchecked)
+        if type(data) == h5py.Dataset:
+            tree_node.setCheckState(0, Qt.CheckState.Unchecked)
         if parent_node is not None:
             parent_node.addChild(tree_node)
         else:
@@ -94,6 +94,22 @@ class DataTreeView(QtGui.QTreeWidget):
         if type(node_data) == h5py.Group:
             for children in node_data.itervalues():
                 self.recursivePopulateTree(children, node)
+
+    def all_dataset_elements(self):
+        ''' returns all the elements in the tree'''
+        elements = []
+        roots = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
+        for r in roots:
+            entries = [r.child(i) for i in range(r.childCount())]
+            for entry in entries:
+                datasets = [entry.child(i) for i in range(entry.childCount())]
+                elements.extend(datasets)
+        return elements
+
+    def all_checked_dataset_elements(self):
+        dataset_items = self.all_dataset_elements()
+        return [x.getData() for x in dataset_items if x.checkState(0) == Qt.Checked]
+
 
 
 
