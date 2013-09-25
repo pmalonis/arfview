@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division, \
     print_function, unicode_literals
 from PySide import QtGui, QtCore
-from PySide.QtCore import Qt
 import signal
 import sys
 import pyqtgraph as pg
@@ -182,86 +181,6 @@ class MainWindow(QtGui.QMainWindow):
         populateAttrTable(self.attr_table, item)
         self.refresh_data_view()
 
-'''
-def plot_item(item, data_layout):
-
-
-        sampled_datasets = [x for x in datasets
-                            if 'datatype' in x.attrs.keys() and x.attrs['datatype'] < 1000]
-        simple_event_datasets = [x for x in datasets
-                                  if 'datatype' in x.attrs.keys() and is_simple_event(x)]
-        complex_event_datasets = [x for x in datasets
-                                  if 'datatype' in x.attrs.keys() and is_complex_event(x)]
-
-        for dataset in sampled_datasets:
-            sr = float(dataset.attrs['sampling_rate'])
-            t = np.arange(0, len(dataset)) / sr
-            pl = data_layout.addPlot(title=dataset.name,
-                                          name=str(len(subplots)), row=len(subplots), col=0)
-            subplots.append(pl)
-            pl.plot(t, dataset)
-            pl.showGrid(x=True, y=True)
-            if len(subplots) == 1:
-                masterXLink = pl
-            else:
-                pl.setXLink(masterXLink)
-
-        for dataset in sampled_datasets: # Plot spectrograms
-            if dataset.attrs['datatype'] in [0, 1]:
-                sr = float(dataset.attrs['sampling_rate'])
-                Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=512, noverlap=400)
-                img = pg.ImageItem(np.log(Pxx.T))
-                #img.setLevels((-5, 10))
-                img.setScale(ts[-1] / Pxx.shape[1])
-                vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
-                subplots.append(vb)
-                g = pg.GridItem()
-                vb.addItem(g)
-                vb.addItem(img)
-                vb.setMouseEnabled(x=True, y=False)
-                vb.setXLink(masterXLink)
-
-        for dataset in simple_event_datasets:
-            if dataset.attrs['units'] == 'ms':
-                data = dataset.value / 1000.
-            elif dataset.attrs['units'] == 'samples':
-                data = dataset.value / dataset.attrs['sampling_rate']
-            else:
-                data = dataset.value
-            w = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
-                                    row=len(subplots), col=0)
-            subplots.append(w)
-            s = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 120))
-            spots = [{'pos': (i, 0), 'data': 1} for i in data]
-            s.addPoints(spots)
-            w.addItem(s)
-            s.sigClicked.connect(clicked)
-            if len(subplots) == 1:
-                masterXLink = w
-            else:
-                w.setXLink(masterXLink)
-
-
-        for dataset in complex_event_datasets:
-            if dataset.attrs['units'] == 'ms':
-                data = dataset.value / 1000.
-            elif dataset.attrs['units'] == 'samples':
-                data = dataset.value / dataset.attrs['sampling_rate']
-            else:
-                data = dataset.value
-            w = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
-                                    row=len(subplots), col=0)
-            subplots.append(w)
-            for tup in dataset:
-                label = tup['name']
-                start = tup['start']
-                stop = tup['stop']
-                if start == stop:
-                    w.addItem(pg.TextItem(label, fill=(255, 255, 255, 100)), anchor=start)
-                else:
-                    w.addItem(pg.TextItem(label, color=(0, 255, 0, 100)), anchor=start)
-                    w.addItem(pg.TextItem(label, color=(255, 0, 0, 100)), anchor=stop)
-'''
 
 def plot_dataset_list(dataset_list, data_layout):
     ''' plots a list of datasets to a data layout'''
