@@ -16,6 +16,8 @@ import os.path
 import tempfile
 from arfview.datatree import DataTreeView
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2 bug
+
+
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
     def __init__(self):
