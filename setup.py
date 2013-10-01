@@ -9,6 +9,7 @@ import arfview
 
 here = os.path.abspath(os.path.dirname(__file__))
 
+
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
     sep = kwargs.get('sep', '\n')
@@ -19,6 +20,7 @@ def read(*filenames, **kwargs):
     return sep.join(buf)
 
 long_description = read('README.md', 'CHANGES.md')
+
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -33,7 +35,7 @@ class PyTest(TestCommand):
 
 setup(
     name='arfview',
-    scripts = ['arfview/arfview.py'],
+    scripts=['arfview/arfview.py'],
     version=arfview.__version__,
     url='http://github.com/kylerbrown/arfview/',
     license='MIT License',
@@ -45,7 +47,7 @@ setup(
                       'h5py',
                       'scipy',
                       'numpy'
-                    ],
+                      ],
     cmdclass={'test': PyTest},
     author_email='kylerjbrown@gmail.com',
     description='a data visualization program for arf files',
@@ -54,7 +56,7 @@ setup(
     include_package_data=True,
     platforms='any',
     test_suite='arfview.test.test_arfview',
-    classifiers = [
+    classifiers=[
         'Programming Language :: Python',
         'Development Status :: 4 - Beta',
         'Natural Language :: English',
