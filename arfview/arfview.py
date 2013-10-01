@@ -186,6 +186,8 @@ def plot_dataset_list(dataset_list, data_layout):
     ''' plots a list of datasets to a data layout'''
     data_layout.clear()
     subplots = []
+    # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
+                                                                      # shape that works
     for dataset in dataset_list:
 
         '''sampled data'''
@@ -209,7 +211,8 @@ def plot_dataset_list(dataset_list, data_layout):
             pl = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
                                     row=len(subplots), col=0)
             subplots.append(pl)
-            s = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 120))
+            s = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 120),
+                                   symbol='s')
             spots = [{'pos': (i, 0), 'data': 1} for i in data]
             s.addPoints(spots)
             pl.addItem(s)
@@ -292,11 +295,11 @@ def export(dataset, export_format='wav', savepath=None):
 
 def playSound(data):
     print('writing wav file')
-    tfile = tempfile.mktemp() + '.wav'
+    tfile = tempfile.mktemp() + '_' + data.name.replace('/', '_') + '.wav'
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    os.system('play ' + tfile +  ' &')
+    os.system('vlc ' + tfile + ' &')
 
 
 def populateAttrTable(table, item):
