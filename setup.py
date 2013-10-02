@@ -35,13 +35,14 @@ class PyTest(TestCommand):
 
 setup(
     name='arfview',
-    scripts=['arfview/arfview.py'],
+    scripts=['arfview.py'],
     version=arfview.__version__,
     url='http://github.com/kylerbrown/arfview/',
     license='MIT License',
     author='Kyler Brown',
     tests_require=['pytest'],
     install_requires=['pyqtgraph>=0.9.7',
+                      'lbl>=0.1.1',
                       'PySide',
                       'matplotlib',
                       'h5py',

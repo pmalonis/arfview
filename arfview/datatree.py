@@ -4,15 +4,20 @@ datatree.py
 This file contains aspects of arf model and it's associated view DataTreeView
 
 '''
-
+import tempfile
+import os.path
 from PySide import QtGui
 from PySide.QtCore import Qt
 from datetime import datetime
 from dateutil import tz
 import h5py
+import lbl
+import arf
+
 
 named_types = {0 : 'UNDEFINED', 1 : 'ACOUSTIC', 2 : 'EXTRAC_HP', 3 : 'EXTRAC_LF',
                4 : 'EXTRAC_EEG', 5 : 'INTRAC_CC', 6 : 'INTRAC_VC',
+               23 : 'EXTRAC_RAW',
                1000 : 'EVENT',
                1001 : 'SPIKET',
                1002 : 'BEHAVET',
@@ -31,11 +36,17 @@ def get_str_type(h5Object):
 
 def get_str_time(entry):
     if 'timestamp' not in entry.attrs.keys():
-        return('foo')
+        return('')
     time = datetime.fromtimestamp(entry.attrs['timestamp'][0] + entry.attrs['timestamp'][1] * 1e-6,
                                   tz.tzutc()).astimezone(tz.tzlocal())
     return time.strftime('%Y-%m-%d, %H:%M:%S:%f')
 
+def createtemparf(lblfilename):
+    lbl_rec = lbl.read(lblfilename)
+    print(lbl_rec)
+    arffile = arf.open_file(tempfile.mktemp())
+    arf.create_dataset(arffile, os.path.split(lblfilename)[-1], lbl_rec, units='s', datatype=2002)
+    return arffile['/']
 
 class Model():
     '''A data object for the data model,
@@ -101,6 +112,8 @@ class DataTreeView(QtGui.QTreeWidget):
         roots = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
         for r in roots:
             entries = [r.child(i) for i in range(r.childCount())]
+            topleveldatasets = [x for x in entries if type(x.getData()) == h5py.Dataset]
+            elements.extend(topleveldatasets)
             for entry in entries:
                 datasets = [entry.child(i) for i in range(entry.childCount())]
                 elements.extend(datasets)
@@ -109,15 +122,6 @@ class DataTreeView(QtGui.QTreeWidget):
     def all_checked_dataset_elements(self):
         dataset_items = self.all_dataset_elements()
         return [x.getData() for x in dataset_items if x.checkState(0) == Qt.Checked]
-
-
-
-
-
-
-
-
-
 
 
 

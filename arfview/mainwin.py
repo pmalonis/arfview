@@ -2,7 +2,7 @@
 """an alpha version of the plotter"""
 
 from __future__ import absolute_import, division, \
-    print_function, unicode_literals
+    print_function
 from PySide import QtGui, QtCore
 import signal
 import sys
@@ -14,9 +14,12 @@ from matplotlib.mlab import specgram
 from scipy.io import wavfile
 import os.path
 import tempfile
-from arfview.datatree import DataTreeView
-QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2 bug
+from arfview.datatree import DataTreeView, createtemparf
+import arfview.utils as utils
+QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 
+import lbl
+print(lbl.__version__)
 
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
@@ -153,7 +156,12 @@ class MainWindow(QtGui.QMainWindow):
     def showDialog(self):
         fname, fileextension = QtGui.QFileDialog.\
                                getOpenFileName(self, 'Open file', '.',
-                                               '*.arf ;; *.hdf5, *.h5 ;; *.mat')
+                                               '*.arf ;; *.lbl ;; *.hdf5, *.h5 ;; *.mat')
+        print(fileextension)
+        extention = os.path.splitext(fname)[-1]
+        if extention == '.lbl':
+            temp_h5f = createtemparf(fname)
+            fname = temp_h5f.file.filename
         print("%s opened" % (fname))
         self.statusBar().showMessage("%s opened" % (fname))
         self.current_file = h5py.File(str(fname))
@@ -181,7 +189,8 @@ class MainWindow(QtGui.QMainWindow):
     def selectEntry(self, treeItem):
         item = treeItem.getData()
         populateAttrTable(self.attr_table, item)
-        self.refresh_data_view()
+        if not self.plotchecked:
+            self.refresh_data_view()
 
 
 def plot_dataset_list(dataset_list, data_layout):
@@ -191,6 +200,7 @@ def plot_dataset_list(dataset_list, data_layout):
     # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
                                                                       # shape that works
     for dataset in dataset_list:
+        print(dataset)
 
         '''sampled data'''
         if dataset.attrs['datatype'] < 1000: # sampled data
@@ -203,7 +213,7 @@ def plot_dataset_list(dataset_list, data_layout):
             pl.showGrid(x=True, y=True)
 
             ''' simple events '''
-        if is_simple_event(dataset):
+        if utils.is_simple_event(dataset):
             if dataset.attrs['units'] == 'ms':
                 data = dataset.value / 1000.
             elif dataset.attrs['units'] == 'samples':
@@ -221,7 +231,7 @@ def plot_dataset_list(dataset_list, data_layout):
             s.sigClicked.connect(clicked)
 
             ''' complex event '''
-        if is_complex_event(dataset):
+        if utils.is_complex_event(dataset):
             if dataset.attrs['units'] == 'ms':
                 data = dataset.value / 1000.
             elif dataset.attrs['units'] == 'samples':
@@ -229,17 +239,22 @@ def plot_dataset_list(dataset_list, data_layout):
             else:
                 data = dataset.value
             pl = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
-                                    row=len(subplots), col=0)
+                                     row=len(subplots), col=0)
+            pl.showLabel('left', show=False)
             subplots.append(pl)
             for tup in dataset:
                 label = tup['name']
                 start = tup['start']
                 stop = tup['stop']
-                if start == stop:
-                    pl.addItem(pg.TextItem(label, fill=(255, 255, 255, 100)), anchor=start)
-                else:
-                    pl.addItem(pg.TextItem(label, color=(0, 255, 0, 100)), anchor=start)
-                    pl.addItem(pg.TextItem(label, color=(255, 0, 0, 100)), anchor=stop)
+                region = pg.LinearRegionItem(values =[start, stop])
+                text = pg.TextItem(label)
+                text.setPos(start, .5)
+#                pl.addItem(pg.TextItem(label, color=(0, 255, 0),
+#                                       fill=(255, 255, 255, 100), anchor=(start, 0)))
+#                pl.addItem(pg.TextItem(label, color=(255, 0, 0),
+#                                       fill=(255, 255, 255, 100), anchor=(stop, 0)))
+                pl.addItem(region)
+                pl.addItem(text)
 
         '''linking x axes'''
         if len(subplots) == 1:
@@ -274,15 +289,7 @@ def clicked(plot, points):
         print(dir(p))
     lastClicked = points
 
-def is_simple_event(dataset):
-    if dataset.attrs['datatype'] > 1000 and dataset.value.dtype.names is None:
-        return True
-    else:
-        return False
 
-def is_complex_event(dataset):
-    if dataset.attrs['datatype'] > 1000 and dataset.value.dtype.names is None:
-        pass
 
 
 def export(dataset, export_format='wav', savepath=None):
@@ -333,5 +340,3 @@ def main():
     sys.exit(app.exec_())
     #if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
     #    QtGui.QApplication.instance().exec_()
-if __name__ == '__main__':
-    main()
