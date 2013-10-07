@@ -26,7 +26,7 @@ named_types = {0 : 'UNDEFINED', 1 : 'ACOUSTIC', 2 : 'EXTRAC_HP', 3 : 'EXTRAC_LF'
                2002 : 'COMPONENTL'}
 
 def get_str_type(h5Object):
-    if type(h5Object) == h5py.Dataset:
+    if type(h5Object) == h5py.Dataset and 'datatype' in h5Object.attrs.keys():
         if h5Object.attrs['datatype'] in named_types.keys():
             return named_types[h5Object.attrs['datatype']]
         else: return str(h5Object.attrs['datatype'])
@@ -103,8 +103,8 @@ class DataTreeView(QtGui.QTreeWidget):
     def recursivePopulateTree(self, node_data, parent_node=None):
         node = self.add(node_data, parent_node)
         if type(node_data) == h5py.Group:
-            for children in node_data.itervalues():
-                self.recursivePopulateTree(children, node)
+            sorted_childs = sorted(node_data.values(), cmp=lambda x,y: cmp(x.name, y.name))
+            [self.recursivePopulateTree(children, node) for children in sorted_childs]
 
     def all_dataset_elements(self):
         ''' returns all the elements in the tree'''
@@ -122,14 +122,3 @@ class DataTreeView(QtGui.QTreeWidget):
     def all_checked_dataset_elements(self):
         dataset_items = self.all_dataset_elements()
         return [x.getData() for x in dataset_items if x.checkState(0) == Qt.Checked]
-
-
-
-
-
-
-
-
-
-
-

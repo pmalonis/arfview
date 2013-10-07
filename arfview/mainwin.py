@@ -201,6 +201,11 @@ def plot_dataset_list(dataset_list, data_layout):
                                                                       # shape that works
     for dataset in dataset_list:
         print(dataset)
+        if 'datatype' not in dataset.attrs.keys():
+            print('{} is not an arf dataset'.format(repr(dataset)))
+            if os.path.basename(dataset.name) == 'jill_log':
+                print(dataset.value)
+            continue
 
         '''sampled data'''
         if dataset.attrs['datatype'] < 1000: # sampled data
@@ -213,7 +218,7 @@ def plot_dataset_list(dataset_list, data_layout):
             pl.showGrid(x=True, y=True)
 
             ''' simple events '''
-        if utils.is_simple_event(dataset):
+        elif utils.is_simple_event(dataset):
             if dataset.attrs['units'] == 'ms':
                 data = dataset.value / 1000.
             elif dataset.attrs['units'] == 'samples':
@@ -231,7 +236,7 @@ def plot_dataset_list(dataset_list, data_layout):
             s.sigClicked.connect(clicked)
 
             ''' complex event '''
-        if utils.is_complex_event(dataset):
+        elif utils.is_complex_event(dataset):
             if dataset.attrs['units'] == 'ms':
                 data = dataset.value / 1000.
             elif dataset.attrs['units'] == 'samples':
@@ -255,6 +260,12 @@ def plot_dataset_list(dataset_list, data_layout):
 #                                       fill=(255, 255, 255, 100), anchor=(stop, 0)))
                 pl.addItem(region)
                 pl.addItem(text)
+        else:
+            print('I don\'t know how to plot {} of type {} \
+            with datatype {}'.format(dataset,
+                                     type(dataset),
+                                     dataset.attrs['datatype']))
+            continue
 
         '''linking x axes'''
         if len(subplots) == 1:
