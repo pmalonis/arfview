@@ -17,6 +17,7 @@ import tempfile
 from arfview.datatree import DataTreeView, createtemparf
 import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
+from arfview.labelPlot import labelPlot
 
 import lbl
 print(lbl.__version__)
@@ -237,29 +238,12 @@ def plot_dataset_list(dataset_list, data_layout):
 
             ''' complex event '''
         elif utils.is_complex_event(dataset):
-            if dataset.attrs['units'] == 'ms':
-                data = dataset.value / 1000.
-            elif dataset.attrs['units'] == 'samples':
-                data = dataset.value / dataset.attrs['sampling_rate']
-            else:
-                data = dataset.value
-            pl = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
-                                     row=len(subplots), col=0)
+            pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)),
+                           row=len(subplots), col=0)
+            data_layout.addItem(pl) 
             pl.showLabel('left', show=False)
             subplots.append(pl)
-            for tup in dataset:
-                label = tup['name']
-                start = tup['start']
-                stop = tup['stop']
-                region = pg.LinearRegionItem(values =[start, stop])
-                text = pg.TextItem(label)
-                text.setPos(start, .5)
-#                pl.addItem(pg.TextItem(label, color=(0, 255, 0),
-#                                       fill=(255, 255, 255, 100), anchor=(start, 0)))
-#                pl.addItem(pg.TextItem(label, color=(255, 0, 0),
-#                                       fill=(255, 255, 255, 100), anchor=(stop, 0)))
-                pl.addItem(region)
-                pl.addItem(text)
+            
         else:
             print('I don\'t know how to plot {} of type {} \
             with datatype {}'.format(dataset,
