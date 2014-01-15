@@ -215,7 +215,14 @@ class MainWindow(QtGui.QMainWindow):
         elif isinstance(item.getData(), h5py.Dataset):
             lbl_parent = item.parent
         lbl_rec = np.zeros((0,),dtype=[('name', 'a8'), ('start',float), ('stop', float)])
-        dset = arf.create_dataset(lbl_parent.getData(), 'lbl', data=lbl_rec, units = 'ms',
+        dset_name = 'lbl'
+        #naming new label dataset if 'lbl' is already in group
+        idx = 1
+        while dset_name in lbl_parent.getData().keys():
+            dset_name = 'lbl_%d' %(idx)
+            idx += 1
+            
+        dset = arf.create_dataset(lbl_parent.getData(), dset_name, data=lbl_rec, units = 'ms',
                                   maxshape=(None,), datatype=2002)
         self.tree_view.add(dset, parent_node=lbl_parent)
         self.refresh_data_view()
@@ -264,9 +271,8 @@ def plot_dataset_list(dataset_list, data_layout):
 
             ''' complex event '''
         elif utils.is_complex_event(dataset):
-            pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)),
-                           row=len(subplots), col=0)
-            data_layout.addItem(pl) 
+            pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
+            data_layout.addItem(pl, row=len(subplots), col=0) 
             pl.showLabel('left', show=False)
             subplots.append(pl)
             
