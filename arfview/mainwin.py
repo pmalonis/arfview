@@ -18,6 +18,7 @@ from arfview.datatree import DataTreeView, createtemparf
 import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from arfview.labelPlot import labelPlot
+import arf
 
 import lbl
 print(lbl.__version__)
@@ -74,6 +75,14 @@ class MainWindow(QtGui.QMainWindow):
         refreshAction.setStatusTip('Refresh Data View')
         refreshAction.triggered.connect(self.refresh_data_view)
 
+        labelAction = QtGui.QAction(QtGui.QIcon.fromTheme('insert-object'),
+                                      'Add Label', self)
+        labelAction.setVisible(False)
+        labelAction.setShortcut('Ctrl+l')
+        labelAction.setStatusTip('Add label entry to current group')
+        labelAction.triggered.connect(self.add_label)
+        self.labelAction = labelAction
+        
         # menubar
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
@@ -91,6 +100,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addAction(exportAction)
         self.toolbar.addAction(plotcheckedAction)
         self.toolbar.addAction(refreshAction)
+        self.toolbar.addAction(labelAction)
 
         # file tree
         self.tree_view = DataTreeView()
@@ -192,7 +202,23 @@ class MainWindow(QtGui.QMainWindow):
         populateAttrTable(self.attr_table, item)
         if not self.plotchecked:
             self.refresh_data_view()
-
+        if (isinstance(item, h5py.Dataset) or isinstance(item, h5py.Group)
+            and item.name != '/'):
+            self.labelAction.setVisible(True)
+        else:
+            self.labelAction.setVisible(False)
+            
+    def add_label(self):
+        item = self.tree_view.currentItem()
+        if isinstance(item.getData(), h5py.Group):
+            lbl_parent = item
+        elif isinstance(item.getData(), h5py.Dataset):
+            lbl_parent = item.parent
+        lbl_rec = np.zeros((0,),dtype=[('name', 'a8'), ('start',float), ('stop', float)])
+        dset = arf.create_dataset(lbl_parent.getData(), 'lbl', data=lbl_rec, units = 'ms',
+                                  maxshape=(None,), datatype=2002)
+        self.tree_view.add(dset, parent_node=lbl_parent)
+        self.refresh_data_view()
 
 def plot_dataset_list(dataset_list, data_layout):
     ''' plots a list of datasets to a data layout'''

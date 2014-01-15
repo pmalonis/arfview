@@ -26,12 +26,11 @@ class labelPlot(pg.PlotItem):
             self.scaling_factor = self.lbl.attrs['sampling_rate']
         else:
             self.scaling_factor = 1
-        
+ 
         for tup in self.lbl:
-            self.plot_complex_event(tup)
+                self.plot_complex_event(tup)
                 
     def plot_complex_event(self, complex_event, with_text=True):
-            
         start = complex_event['start'] / self.scaling_factor
         stop = complex_event['stop'] / self.scaling_factor
         region = pg.LinearRegionItem([start, stop])
