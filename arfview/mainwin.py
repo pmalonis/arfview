@@ -271,6 +271,17 @@ def plot_dataset_list(dataset_list, data_layout):
 
             ''' complex event '''
         elif utils.is_complex_event(dataset):
+            #creating new extensible dataset if not extensible
+            if dataset.maxshape != (None,):
+                data = dataset[:]
+                name = dataset.name
+                group= dataset.parent
+                attributes = dataset.attrs
+                del group[name]
+                del dataset
+                dataset = arf.create_dataset(group, name, data,
+                                             maxshape=(None,),**attributes)
+                
             pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
             data_layout.addItem(pl, row=len(subplots), col=0) 
             pl.showLabel('left', show=False)
@@ -296,6 +307,7 @@ def plot_dataset_list(dataset_list, data_layout):
             img.setScale(ts[-1] / Pxx.shape[1])
             vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
             subplots.append(vb)
+
             g = pg.GridItem()
             vb.addItem(g)
             vb.addItem(img)

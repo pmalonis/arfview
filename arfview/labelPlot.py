@@ -19,13 +19,17 @@ class labelRegion(pg.LinearRegionItem):
         self.vb = self.getViewBox()
         if not self.vb: return
         self.vb.addItem(self.text)
-        self.position_text()
-        self.vb.sigRangeChanged.connect(self.position_text)
+        self.position_text_y()
+        self.position_text_x()
+        self.vb.sigXRangeChanged.connect(self.position_text_x)
+        self.vb.sigYRangeChanged.connect(self.position_text_y)
 
-    def position_text(self):
+    def position_text_y(self):
         if not self.vb: return
         yrange=self.vb.viewRange()[1]
         self.text.setY(np.mean(yrange))
+
+    def position_text_x(self):
         xmin, xmax = self.vb.viewRange()[0]
         if xmin <= self.getRegion()[0] <= xmax:
             self.text.setX(self.getRegion()[0])
