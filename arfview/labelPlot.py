@@ -23,7 +23,8 @@ class labelRegion(pg.LinearRegionItem):
         self.position_text_x()
         self.vb.sigXRangeChanged.connect(self.position_text_x)
         self.vb.sigYRangeChanged.connect(self.position_text_y)
-
+        self.sigRegionChanged.connect(self.position_text_x)
+        
     def position_text_y(self):
         if not self.vb: return
         yrange=self.vb.viewRange()[1]
@@ -65,9 +66,13 @@ class labelPlot(pg.PlotItem):
         stop = complex_event['stop'] / self.scaling_factor
         region = labelRegion(name, start, stop)
         self.addItem(region)
-        
         return region
-            
+        
+    def sort_lbl(self):
+        data = self.lbl[:]
+        data.sort(order='start')
+        self.lbl[:] = data
+        
     def keyPressEvent(self, event):
         if event.text().isalpha():
             self.key = event.text().upper()
@@ -77,23 +82,26 @@ class labelPlot(pg.PlotItem):
             self.key = None
             
     def mouseClickEvent(self, event):
-        if event.button() != Qt.LeftButton:
-            return
-        pos=self.getViewBox().mapSceneToView(event.scenePos())
-        t = pos.x() * self.scaling_factor
-        if self.key and not self.activeLabel:
-            arf.append_data(self.lbl, (self.key, t, t))
-            self.activeLabel = self.plot_complex_event(self.lbl[-1]) 
-            if event.modifiers() != Qt.ShiftModifier:
-                   self.activeLabel = None
-        elif self.activeLabel:
-            if t >= self.lbl[-1]['start']:
-                self.lbl[-1] = (self.lbl[-1]['name'], self.lbl[-1]['start'], t)
-            else:
-                self.lbl[-1] =  (self.lbl[-1]['name'], t, self.lbl[-1]['stop'])
+        if event.button() == Qt.LeftButton:
+            pos=self.getViewBox().mapSceneToView(event.scenePos())
+            t = pos.x() * self.scaling_factor
+            if self.key and not self.activeLabel:
+                arf.append_data(self.lbl, (self.key, t, t))
+                self.activeLabel = self.plot_complex_event(self.lbl[-1]) 
+                if event.modifiers() != Qt.ShiftModifier:
+                    self.sort_lbl()
+                    self.activeLabel = None
+            elif self.activeLabel:
+                if t >= self.lbl[-1]['start']:
+                    self.lbl[-1] = (self.lbl[-1]['name'], self.lbl[-1]['start'], t)
+                else:
+                    self.lbl[-1] =  (self.lbl[-1]['name'], t, self.lbl[-1]['stop'])
 
-            self.plot_complex_event(self.lbl[-1])
-            self.activeLabel = None
+                new_region = (np.array([self.lbl[-1]['start'], self.lbl[-1]['stop']])/ 
+                              self.scaling_factor)
 
+                self.activeLabel.setRegion(new_region)
+                self.activeLabel = None
+                self.sort_lbl()
             
             
