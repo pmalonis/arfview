@@ -18,6 +18,7 @@ from arfview.datatree import DataTreeView, createtemparf
 import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from arfview.labelPlot import labelPlot
+from arfview.treeToolBar import treeToolBar
 import arf
 
 import lbl
@@ -108,6 +109,9 @@ class MainWindow(QtGui.QMainWindow):
         if self.current_file:
             self.populateTree()
 
+        # tree_toolbar
+        self.tree_toolbar = treeToolBar(self.tree_view)
+        
         #attribute table
         self.attr_table = QtGui.QTableWidget(10, 2)
         self.attr_table.setHorizontalHeaderLabels(('key','value'))
@@ -124,6 +128,8 @@ class MainWindow(QtGui.QMainWindow):
         self.area.addDock(data_dock, 'right')
         self.area.addDock(attr_table_dock, 'bottom', tree_dock)
         tree_dock.addWidget(self.tree_view)
+        tree_dock.addWidget(self.tree_toolbar)
+        tree_dock.addAction(exitAction)
         data_dock.addWidget(self.data_layout)
         attr_table_dock.addWidget(self.attr_table)
         self.setCentralWidget(self.area)
