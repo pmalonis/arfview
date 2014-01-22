@@ -19,6 +19,7 @@ import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
+from arfview.settingsPanel import settingsPanel
 import arf
 
 import lbl
@@ -119,22 +120,28 @@ class MainWindow(QtGui.QMainWindow):
         #plot region
         self.data_layout = pg.GraphicsLayoutWidget()
 
+        #settings panel
+        self.settings_panel = settingsPanel()
+        
         # final steps
         self.area = pgd.DockArea()
-        tree_dock = pgd.Dock("Tree", size=(1, 1))
+        tree_dock = pgd.Dock("Tree", size=(200, 1))
         data_dock = pgd.Dock("Data", size=(500, 200))
-        attr_table_dock = pgd.Dock("Attributes", size=(1, 1))
+        attr_table_dock = pgd.Dock("Attributes", size=(200, 1))
+        settings_dock = pgd.Dock('Settings',size = (200,1))
         self.area.addDock(tree_dock, 'left')
         self.area.addDock(data_dock, 'right')
         self.area.addDock(attr_table_dock, 'bottom', tree_dock)
+        self.area.addDock(settings_dock, 'right', data_dock)
         tree_dock.addWidget(self.tree_view)
         tree_dock.addWidget(self.tree_toolbar)
         tree_dock.addAction(exitAction)
         data_dock.addWidget(self.data_layout)
         attr_table_dock.addWidget(self.attr_table)
+        settings_dock.addWidget(self.settings_panel)
         self.setCentralWidget(self.area)
         self.setWindowTitle('arfview')
-        self.resize(1000, 500)
+        self.resize(1200, 800)
         self.show()
 
     def toggleplotchecked(self):
