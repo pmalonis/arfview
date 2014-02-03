@@ -19,6 +19,7 @@ import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
+from arfview.settingsPanel import settingsPanel
 import arf
 
 import lbl
@@ -119,22 +120,48 @@ class MainWindow(QtGui.QMainWindow):
         #plot region
         self.data_layout = pg.GraphicsLayoutWidget()
 
+        #settings panel
+        self.settings_panel = settingsPanel()
+        print(self.settings_panel.layout())
+        # self.settings_panel = settingsPanel('Settings', size=(200,1))
+        # self.oscillogram = QtGui.QCheckBox("oscillogram")
+        # self.spectrogram = QtGui.QCheckBox("spectrogram")
+        # self.raster = QtGui.QCheckBox("raster")
+        # self.psth = QtGui.QCheckBox("PSTH")
+        # self.isi = QtGui.QCheckBox("ISI")
+        # self.applyButton=QtGui.QPushButton("apply")
+
+        # ledge = 0
+        # uedge = 0
+
+        # self.settings_panel.addWidget(self.oscillogram, uedge, ledge)
+        # self.settings_panel.addWidget(self.spectrogram, uedge + 1, ledge)
+        # self.settings_panel.addWidget(self.raster, uedge + 2, ledge)
+        # self.settings_panel.addWidget(self.isi, uedge + 3, ledge)
+        # self.settings_panel.addWidget(self.psth, uedge + 4, ledge)
+        # self.settings_panel.addWidget(self.applyButton, uedge + 5, ledge + 1)
+
         # final steps
         self.area = pgd.DockArea()
-        tree_dock = pgd.Dock("Tree", size=(1, 1))
+        tree_dock = pgd.Dock("Tree", size=(200, 1))
         data_dock = pgd.Dock("Data", size=(500, 200))
-        attr_table_dock = pgd.Dock("Attributes", size=(1, 1))
+        attr_table_dock = pgd.Dock("Attributes", size=(200, 1))
+        settings_dock = pgd.Dock('Settings', size=(300,200))
         self.area.addDock(tree_dock, 'left')
         self.area.addDock(data_dock, 'right')
         self.area.addDock(attr_table_dock, 'bottom', tree_dock)
+        self.area.addDock(settings_dock, 'right', data_dock)
         tree_dock.addWidget(self.tree_view)
         tree_dock.addWidget(self.tree_toolbar)
         tree_dock.addAction(exitAction)
         data_dock.addWidget(self.data_layout)
         attr_table_dock.addWidget(self.attr_table)
+        settings_dock.addWidget(self.settings_panel)
+        self.settings_panel.show()
+        
         self.setCentralWidget(self.area)
         self.setWindowTitle('arfview')
-        self.resize(1000, 500)
+        self.resize(1200, 800)
         self.show()
 
     def toggleplotchecked(self):
