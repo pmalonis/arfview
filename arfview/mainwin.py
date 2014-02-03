@@ -20,6 +20,7 @@ QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
+from arfview.rasterPlot import rasterPlot
 import arf
 
 import lbl
@@ -265,7 +266,10 @@ def plot_dataset_list(dataset_list, data_layout):
     data_layout.clear()
     subplots = []
     # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
-                                                                      # shape that works
+    # shape that works
+
+    raster_plot = None
+    psth = None
     for dataset in dataset_list:
         print(dataset)
         if 'datatype' not in dataset.attrs.keys():
@@ -292,15 +296,12 @@ def plot_dataset_list(dataset_list, data_layout):
                 data = dataset.value / dataset.attrs['sampling_rate']
             else:
                 data = dataset.value
-            pl = data_layout.addPlot(title=dataset.name, name=str(len(subplots)),
-                                    row=len(subplots), col=0)
-            subplots.append(pl)
-            s = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 120),
-                                   symbol='s')
-            spots = [{'pos': (i, 0), 'data': 1} for i in data]
-            s.addPoints(spots)
-            pl.addItem(s)
-            s.sigClicked.connect(clicked)
+            
+            if raster_plot:
+                raster_plot.add_trials(data)
+            else:
+                raster_plot = rasterPlot(data)
+
 
             ''' complex event '''
         elif utils.is_complex_event(dataset):
@@ -346,6 +347,13 @@ def plot_dataset_list(dataset_list, data_layout):
             vb.addItem(img)
             vb.setMouseEnabled(x=True, y=False)
             vb.setXLink(masterXLink)
+
+    if raster_plot:
+        subplots.append(raster_plot)
+        raster_plot.sigClicked.connect(clicked)
+        data_layout.addItem(raster_plot, row=len(subplots), col=0)
+        raster_plot.showLabel('left', show=False)
+        
 
 ## Make all plots clickable
 lastClicked = []

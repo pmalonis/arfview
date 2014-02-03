@@ -82,48 +82,95 @@ class settingsPanel(QtGui.QWidget):
         self.y_max_edit = QtGui.QLineEdit()
         self.y_min_edit.setMaximumWidth(100)
         self.y_max_edit.setMaximumWidth(100)
-        
         group_box = QtGui.QGroupBox("Spectrogram")
         layout = QtGui.QGridLayout()
         ledge = 0
-        uedge = 0  
-        layout.addWidget(self.spectrogram_check, uedge, ledge)      
+        uedge = 0
+        min_label=QtGui.QLabel('Y Min:')
+        max_label=QtGui.QLabel('Y Max:')
+        layout.addWidget(self.spectrogram_check, uedge, ledge)
+        layout.addWidget(min_label,uedge+1, ledge)
+        layout.addWidget(max_label,uedge+1, ledge+1)
+        layout.addWidget(self.y_min_edit, uedge+2, ledge)
+        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
+        layout.setContentsMargins(0,0,50,10)
+        layout.setColumnStretch(1,30)
+        group_box.setMaximumHeight(100)
         group_box.setLayout(layout)
-
+    
         return group_box
+        
 
     def create_raster_box(self):
         self.raster_check=QtGui.QCheckBox("Visible")
-        
+        self.y_min_edit = QtGui.QLineEdit()
+        self.y_max_edit = QtGui.QLineEdit()
+        self.y_min_edit.setMaximumWidth(100)
+        self.y_max_edit.setMaximumWidth(100)
         group_box = QtGui.QGroupBox("Raster")
         layout = QtGui.QGridLayout()
         ledge = 0
-        uedge = 0  
-        layout.addWidget(self.raster_check, uedge, ledge)      
+        uedge = 0
+        min_label=QtGui.QLabel('Y Min:')
+        max_label=QtGui.QLabel('Y Max:')
+        layout.addWidget(self.raster_check, uedge, ledge)
+        layout.addWidget(min_label,uedge+1, ledge)
+        layout.addWidget(max_label,uedge+1, ledge+1)
+        layout.addWidget(self.y_min_edit, uedge+2, ledge)
+        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
+        layout.setContentsMargins(0,0,50,10)
+        layout.setColumnStretch(1,30)
+        group_box.setMaximumHeight(100)
         group_box.setLayout(layout)
 
         return group_box
 
+        
     def create_psth_box(self):
         self.psth_check=QtGui.QCheckBox("Visible")
-        
+        self.y_min_edit = QtGui.QLineEdit()
+        self.y_max_edit = QtGui.QLineEdit()
+        self.y_min_edit.setMaximumWidth(100)
+        self.y_max_edit.setMaximumWidth(100)
         group_box = QtGui.QGroupBox("PSTH")
         layout = QtGui.QGridLayout()
         ledge = 0
-        uedge = 0  
-        layout.addWidget(self.psth_check, uedge, ledge)      
+        uedge = 0
+        min_label=QtGui.QLabel('Y Min:')
+        max_label=QtGui.QLabel('Y Max:')
+        layout.addWidget(self.psth_check, uedge, ledge)
+        layout.addWidget(min_label,uedge+1, ledge)
+        layout.addWidget(max_label,uedge+1, ledge+1)
+        layout.addWidget(self.y_min_edit, uedge+2, ledge)
+        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
+        layout.setContentsMargins(0,0,50,10)
+        layout.setColumnStretch(1,30)
+        group_box.setMaximumHeight(100)
         group_box.setLayout(layout)
 
         return group_box
 
     def create_isi_box(self):
         self.isi_check=QtGui.QCheckBox("Visible")
-        
+        self.isi_check=QtGui.QCheckBox("Visible")
+        self.y_min_edit = QtGui.QLineEdit()
+        self.y_max_edit = QtGui.QLineEdit()
+        self.y_min_edit.setMaximumWidth(100)
+        self.y_max_edit.setMaximumWidth(100)
         group_box = QtGui.QGroupBox("ISI")
         layout = QtGui.QGridLayout()
         ledge = 0
-        uedge = 0  
-        layout.addWidget(self.isi_check, uedge, ledge)      
+        uedge = 0
+        min_label=QtGui.QLabel('Y Min:')
+        max_label=QtGui.QLabel('Y Max:')
+        layout.addWidget(self.isi_check, uedge, ledge)
+        layout.addWidget(min_label,uedge+1, ledge)
+        layout.addWidget(max_label,uedge+1, ledge+1)
+        layout.addWidget(self.y_min_edit, uedge+2, ledge)
+        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
+        layout.setContentsMargins(0,0,50,10)
+        layout.setColumnStretch(1,30)
+        group_box.setMaximumHeight(100)
         group_box.setLayout(layout)
 
         return group_box
