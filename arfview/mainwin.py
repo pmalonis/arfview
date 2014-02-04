@@ -123,24 +123,6 @@ class MainWindow(QtGui.QMainWindow):
 
         #settings panel
         self.settings_panel = settingsPanel()
-        print(self.settings_panel.layout())
-        # self.settings_panel = settingsPanel('Settings', size=(200,1))
-        # self.oscillogram = QtGui.QCheckBox("oscillogram")
-        # self.spectrogram = QtGui.QCheckBox("spectrogram")
-        # self.raster = QtGui.QCheckBox("raster")
-        # self.psth = QtGui.QCheckBox("PSTH")
-        # self.isi = QtGui.QCheckBox("ISI")
-        # self.applyButton=QtGui.QPushButton("apply")
-
-        # ledge = 0
-        # uedge = 0
-
-        # self.settings_panel.addWidget(self.oscillogram, uedge, ledge)
-        # self.settings_panel.addWidget(self.spectrogram, uedge + 1, ledge)
-        # self.settings_panel.addWidget(self.raster, uedge + 2, ledge)
-        # self.settings_panel.addWidget(self.isi, uedge + 3, ledge)
-        # self.settings_panel.addWidget(self.psth, uedge + 4, ledge)
-        # self.settings_panel.addWidget(self.applyButton, uedge + 5, ledge + 1)
 
         # final steps
         self.area = pgd.DockArea()
@@ -221,14 +203,14 @@ class MainWindow(QtGui.QMainWindow):
     def refresh_data_view(self):
         checked_datasets = self.tree_view.all_checked_dataset_elements()
         if len(checked_datasets) > 0 and self.plotchecked:
-            plot_dataset_list(checked_datasets, self.data_layout)
+            self.plot_dataset_list(checked_datasets, self.data_layout)
         else:
             item = self.tree_view.currentItem().getData()
             if type(item) == h5py.Dataset:
                 datasets = [item]
             else:
                 datasets = [x for x in item.values() if type(x) == h5py.Dataset]
-            plot_dataset_list(datasets, self.data_layout)
+            self.plot_dataset_list(datasets, self.data_layout)
 
 
     def selectEntry(self, treeItem):
@@ -261,99 +243,116 @@ class MainWindow(QtGui.QMainWindow):
         self.tree_view.add(dset, parent_node=lbl_parent)
         self.refresh_data_view()
 
-def plot_dataset_list(dataset_list, data_layout):
-    ''' plots a list of datasets to a data layout'''
-    data_layout.clear()
-    subplots = []
-    # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
-    # shape that works
+    def plot_dataset_list(self, dataset_list, data_layout):
+        ''' plots a list of datasets to a data layout'''
+        data_layout.clear()
+        subplots = []
+        # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
+        # shape that works
 
-    raster_plot = None
-    psth = None
-    for dataset in dataset_list:
-        print(dataset)
-        if 'datatype' not in dataset.attrs.keys():
-            print('{} is not an arf dataset'.format(repr(dataset)))
-            if os.path.basename(dataset.name) == 'jill_log':
-                print(dataset.value)
-            continue
+        raster_plot = None
+        psth = None
+        for dataset in dataset_list:
+            print(dataset)
+            if 'datatype' not in dataset.attrs.keys():
+                print('{} is not an arf dataset'.format(repr(dataset)))
+                if os.path.basename(dataset.name) == 'jill_log':
+                    print(dataset.value)
+                continue
 
-        '''sampled data'''
-        if dataset.attrs['datatype'] < 1000: # sampled data
-            sr = float(dataset.attrs['sampling_rate'])
-            t = np.arange(0, len(dataset)) / sr
-            pl = data_layout.addPlot(title=dataset.name,
-                                          name=str(len(subplots)), row=len(subplots), col=0)
-            subplots.append(pl)
-            pl.plot(t, dataset)
-            pl.showGrid(x=True, y=True)
-
-            ''' simple events '''
-        elif utils.is_simple_event(dataset):
-            if dataset.attrs['units'] == 'ms':
-                data = dataset.value / 1000.
-            elif dataset.attrs['units'] == 'samples':
-                data = dataset.value / dataset.attrs['sampling_rate']
-            else:
-                data = dataset.value
+            '''sampled data'''
+            if dataset.attrs['datatype'] < 1000: # sampled data
+                if (self.settings_panel.oscillogram_check.checkState()
+                    ==QtCore.Qt.Unchecked):
+                    continue
             
-            if raster_plot:
-                raster_plot.add_trials(data)
+                sr = float(dataset.attrs['sampling_rate'])
+                t = np.arange(0, len(dataset)) / sr
+                pl = data_layout.addPlot(title=dataset.name,
+                                              name=str(len(subplots)), row=len(subplots), col=0)
+                subplots.append(pl)
+                pl.plot(t, dataset)
+                pl.showGrid(x=True, y=True)
+
+                ''' simple events '''
+            elif utils.is_simple_event(dataset):
+                if dataset.attrs['units'] == 'ms':
+                    data = dataset.value / 1000.
+                elif dataset.attrs['units'] == 'samples':
+                    data = dataset.value / dataset.attrs['sampling_rate']
+                else:
+                    data = dataset.value
+                if (self.settings_panel.raster_check.checkState()
+                    ==QtCore.Qt.Checked):
+                    if raster_plot:
+                        raster_plot.add_trial(data)
+                    else:
+                        raster_plot = rasterPlot(data)
+                elif (self.settings_panel.psth_check.checkState()
+                      ==QtCore.Qt.Checked):
+                    #TODO make psth
+                    pass
+                continue
+
+                ''' complex event '''
+            elif utils.is_complex_event(dataset):
+                #creating new extensible dataset if not extensible
+                if dataset.maxshape != (None,):
+                    data = dataset[:]
+                    name = dataset.name
+                    group= dataset.parent
+                    attributes = dataset.attrs
+                    del group[name]
+                    del dataset
+                    dataset = arf.create_dataset(group, name, data,
+                                                 maxshape=(None,),**attributes)
+
+                pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
+                data_layout.addItem(pl, row=len(subplots), col=0) 
+                pl.showLabel('left', show=False)
+                subplots.append(pl)
+
             else:
-                raster_plot = rasterPlot(data)
+                print('I don\'t know how to plot {} of type {} \
+                with datatype {}'.format(dataset,
+                                         type(dataset),
+                                         dataset.attrs['datatype']))
+                continue
 
+            '''linking x axes'''
+            if len(subplots) == 1:
+                masterXLink = pl
+            else:
+                pl.setXLink(masterXLink)
 
-            ''' complex event '''
-        elif utils.is_complex_event(dataset):
-            #creating new extensible dataset if not extensible
-            if dataset.maxshape != (None,):
-                data = dataset[:]
-                name = dataset.name
-                group= dataset.parent
-                attributes = dataset.attrs
-                del group[name]
-                del dataset
-                dataset = arf.create_dataset(group, name, data,
-                                             maxshape=(None,),**attributes)
-                
-            pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
-            data_layout.addItem(pl, row=len(subplots), col=0) 
-            pl.showLabel('left', show=False)
-            subplots.append(pl)
-            
-        else:
-            print('I don\'t know how to plot {} of type {} \
-            with datatype {}'.format(dataset,
-                                     type(dataset),
-                                     dataset.attrs['datatype']))
-            continue
+            '''adding spectrograms'''
+            if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
+                if (self.settings_panel.spectrogram_check.checkState()
+                    ==QtCore.Qt.Unchecked):
+                    continue
+                Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=512, noverlap=400)
+                img = pg.ImageItem(np.log(Pxx.T))
+                #img.setLevels((-5, 10))
+                img.setScale(ts[-1] / Pxx.shape[1])
+                vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
+                subplots.append(vb)
 
-        '''linking x axes'''
-        if len(subplots) == 1:
-            masterXLink = pl
-        else:
-            pl.setXLink(masterXLink)
-        '''adding spectrograms'''
-        if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
-            Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=512, noverlap=400)
-            img = pg.ImageItem(np.log(Pxx.T))
-            #img.setLevels((-5, 10))
-            img.setScale(ts[-1] / Pxx.shape[1])
-            vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
-            subplots.append(vb)
+                g = pg.GridItem()
+                vb.addItem(g)
+                vb.addItem(img)
+                vb.setMouseEnabled(x=True, y=False)
+                vb.setXLink(masterXLink)
 
-            g = pg.GridItem()
-            vb.addItem(g)
-            vb.addItem(img)
-            vb.setMouseEnabled(x=True, y=False)
-            vb.setXLink(masterXLink)
+        if raster_plot:
+            subplots.append(raster_plot)
+            data_layout.addItem(raster_plot, row=len(subplots), col=0)
+            raster_plot.showLabel('left', show=False)
+            '''linking x axes'''
+            if len(subplots) == 1:
+                masterXLink = raster_plot
+            else:
+                pl.setXLink(masterXLink)
 
-    if raster_plot:
-        subplots.append(raster_plot)
-        raster_plot.sigClicked.connect(clicked)
-        data_layout.addItem(raster_plot, row=len(subplots), col=0)
-        raster_plot.showLabel('left', show=False)
-        
 
 ## Make all plots clickable
 lastClicked = []
