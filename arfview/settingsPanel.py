@@ -8,169 +8,77 @@ class settingsPanel(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        self.time_axis_box = self.create_time_axis_box()
-        self.oscillogram_box = self.create_oscillogram_box()
-        self.spectrogram_box = self.create_spectrogram_box()
-        self.raster_box = self.create_raster_box()
-        self.psth_box = self.create_psth_box()
-        self.isi_box = self.create_isi_box()
-        self.applyButton=QtGui.QPushButton("apply")
-
-
+        
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.time_axis_box)
-        layout.addWidget(self.oscillogram_box)
+        self.oscillogram_check=QtGui.QCheckBox("Oscillogram")
+        self.oscillogram_check.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.raster_check=QtGui.QCheckBox("Raster")
+        self.raster_check.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.label_check=QtGui.QCheckBox("Label")
+        self.label_check.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.psth_check=QtGui.QCheckBox("PSTH")
+        self.psth_bin_size = QtGui.QLineEdit('10')
+        self.isi_check=QtGui.QCheckBox("ISI")
+        self.isi_bin_size = QtGui.QLineEdit('10')
+        self.spectrogram_check=QtGui.QCheckBox("Spectrogram")
+        self.spectrogram_box = self.create_spectrogram_box()
+
+        psth_settings_layout = QtGui.QHBoxLayout()
+        psth_settings_layout.addWidget(self.psth_check)
+        psth_settings_layout.addWidget(QtGui.QLabel("Bin Size: "))
+        self.psth_bin_size.setMaximumWidth(50)
+        psth_settings_layout.addWidget(self.psth_bin_size)
+        psth_settings_layout.addWidget(QtGui.QLabel('ms'))
+        psth_settings_layout.addStretch()
+        psth_settings_layout.setContentsMargins(0,0,0,0)
+        
+        isi_settings_layout = QtGui.QHBoxLayout()
+        isi_settings_layout.addWidget(self.isi_check)
+        isi_settings_layout.addSpacing(18)
+        isi_settings_layout.addWidget(QtGui.QLabel("Bin Size: "))
+        self.isi_bin_size.setMaximumWidth(50)
+        isi_settings_layout.addWidget(self.isi_bin_size)
+        isi_settings_layout.addWidget(QtGui.QLabel('ms'))
+        isi_settings_layout.addStretch()
+        isi_settings_layout.setContentsMargins(0,0,0,0)
+        
+        layout.addWidget(self.oscillogram_check)
+        layout.addWidget(self.raster_check)
+        layout.addWidget(self.label_check)
+        layout.addLayout(psth_settings_layout)
+        layout.addLayout(isi_settings_layout)
+        layout.addWidget(self.spectrogram_check)
         layout.addWidget(self.spectrogram_box)
-        layout.addWidget(self.raster_box)
-        layout.addWidget(self.isi_box)
-        layout.addWidget(self.psth_box)
-        layout.addWidget(self.applyButton)
+        layout.addStretch()
 
         self.setLayout(layout)
-
-    def create_time_axis_box(self):
-        self.t_min_edit = QtGui.QLineEdit()
-        self.t_max_edit = QtGui.QLineEdit()
-        self.t_min_edit.setMaximumWidth(100)
-        self.t_max_edit.setMaximumWidth(100)
-        group_box = QtGui.QGroupBox("Time Axis")
-        layout = QtGui.QGridLayout()
-        ledge = 0
-        uedge = 1
-        min_label=QtGui.QLabel('Time Min:')
-        max_label=QtGui.QLabel('Time Max:')
-        layout.addWidget(min_label,uedge-1, ledge)
-        layout.addWidget(max_label,uedge-1, ledge+1)
-        layout.addWidget(self.t_min_edit, uedge, ledge)
-        layout.addWidget(self.t_max_edit, uedge, ledge+1)
-
-        layout.setContentsMargins(0,0,50,10)
-        layout.setColumnStretch(1,30)
-        group_box.setMaximumHeight(70)
-        group_box.setLayout(layout)
-
-        print layout.originCorner()
-        return group_box
         
-    def create_oscillogram_box(self):
-        self.oscillogram_check=QtGui.QCheckBox("Visible")
-        self.y_min_edit = QtGui.QLineEdit()
-        self.y_max_edit = QtGui.QLineEdit()
-        self.y_min_edit.setMaximumWidth(100)
-        self.y_max_edit.setMaximumWidth(100)
-        group_box = QtGui.QGroupBox("Oscillogram")
-        layout = QtGui.QGridLayout()
-        ledge = 0
-        uedge = 0
-        min_label=QtGui.QLabel('Y Min:')
-        max_label=QtGui.QLabel('Y Max:')
-        layout.addWidget(self.oscillogram_check, uedge, ledge)
-        layout.addWidget(min_label,uedge+1, ledge)
-        layout.addWidget(max_label,uedge+1, ledge+1)
-        layout.addWidget(self.y_min_edit, uedge+2, ledge)
-        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
-        layout.setContentsMargins(0,0,50,10)
-        layout.setColumnStretch(1,30)
-        group_box.setMaximumHeight(100)
-        group_box.setLayout(layout)
-
-        return group_box
 
     def create_spectrogram_box(self):
-        self.spectrogram_check=QtGui.QCheckBox("Visible")
-        self.y_min_edit = QtGui.QLineEdit()
-        self.y_max_edit = QtGui.QLineEdit()
-        self.y_min_edit.setMaximumWidth(100)
-        self.y_max_edit.setMaximumWidth(100)
-        group_box = QtGui.QGroupBox("Spectrogram")
+        self.spectrogram_check.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.win_size = QtGui.QLineEdit("256")
+        self.step = QtGui.QLineEdit("1")
+        self.window = QtGui.QComboBox()
+        self.window.addItem("Hann")
+        self.window.addItem("Bartlett")
+        self.window.addItem("Blackman")
+        self.window.addItem("Boxcar")
+        self.window.addItem("Hamming")
+        self.window.addItem("Parzen")
+        group_box = QtGui.QGroupBox("Spectrogram Settings")
         layout = QtGui.QGridLayout()
         ledge = 0
         uedge = 0
-        min_label=QtGui.QLabel('Y Min:')
-        max_label=QtGui.QLabel('Y Max:')
-        layout.addWidget(self.spectrogram_check, uedge, ledge)
-        layout.addWidget(min_label,uedge+1, ledge)
-        layout.addWidget(max_label,uedge+1, ledge+1)
-        layout.addWidget(self.y_min_edit, uedge+2, ledge)
-        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
-        layout.setContentsMargins(0,0,50,10)
+        layout.addWidget(QtGui.QLabel("Window Size:"), uedge, ledge)
+        layout.addWidget(self.win_size, uedge, ledge+1)
+        layout.addWidget(QtGui.QLabel("samples"), uedge, ledge+2)
+        layout.addWidget(QtGui.QLabel("Time Step:"), uedge+1, ledge)
+        layout.addWidget(self.step, uedge+1, ledge+1)
+        layout.addWidget(QtGui.QLabel("ms"), uedge+1, ledge+2)
+        layout.addWidget(QtGui.QLabel("Window"), uedge+2, ledge)
+        layout.addWidget(self.window, uedge+2, ledge+1)
+        #layout.setContentsMargins(0,0,50,0)
         layout.setColumnStretch(1,30)
-        group_box.setMaximumHeight(100)
         group_box.setLayout(layout)
     
-        return group_box
-        
-
-    def create_raster_box(self):
-        self.raster_check=QtGui.QCheckBox("Visible")
-        self.y_min_edit = QtGui.QLineEdit()
-        self.y_max_edit = QtGui.QLineEdit()
-        self.y_min_edit.setMaximumWidth(100)
-        self.y_max_edit.setMaximumWidth(100)
-        group_box = QtGui.QGroupBox("Raster")
-        layout = QtGui.QGridLayout()
-        ledge = 0
-        uedge = 0
-        min_label=QtGui.QLabel('Y Min:')
-        max_label=QtGui.QLabel('Y Max:')
-        layout.addWidget(self.raster_check, uedge, ledge)
-        layout.addWidget(min_label,uedge+1, ledge)
-        layout.addWidget(max_label,uedge+1, ledge+1)
-        layout.addWidget(self.y_min_edit, uedge+2, ledge)
-        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
-        layout.setContentsMargins(0,0,50,10)
-        layout.setColumnStretch(1,30)
-        group_box.setMaximumHeight(100)
-        group_box.setLayout(layout)
-
-        return group_box
-
-        
-    def create_psth_box(self):
-        self.psth_check=QtGui.QCheckBox("Visible")
-        self.y_min_edit = QtGui.QLineEdit()
-        self.y_max_edit = QtGui.QLineEdit()
-        self.y_min_edit.setMaximumWidth(100)
-        self.y_max_edit.setMaximumWidth(100)
-        group_box = QtGui.QGroupBox("PSTH")
-        layout = QtGui.QGridLayout()
-        ledge = 0
-        uedge = 0
-        min_label=QtGui.QLabel('Y Min:')
-        max_label=QtGui.QLabel('Y Max:')
-        layout.addWidget(self.psth_check, uedge, ledge)
-        layout.addWidget(min_label,uedge+1, ledge)
-        layout.addWidget(max_label,uedge+1, ledge+1)
-        layout.addWidget(self.y_min_edit, uedge+2, ledge)
-        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
-        layout.setContentsMargins(0,0,50,10)
-        layout.setColumnStretch(1,30)
-        group_box.setMaximumHeight(100)
-        group_box.setLayout(layout)
-
-        return group_box
-
-    def create_isi_box(self):
-        self.isi_check=QtGui.QCheckBox("Visible")
-        self.isi_check=QtGui.QCheckBox("Visible")
-        self.y_min_edit = QtGui.QLineEdit()
-        self.y_max_edit = QtGui.QLineEdit()
-        self.y_min_edit.setMaximumWidth(100)
-        self.y_max_edit.setMaximumWidth(100)
-        group_box = QtGui.QGroupBox("ISI")
-        layout = QtGui.QGridLayout()
-        ledge = 0
-        uedge = 0
-        min_label=QtGui.QLabel('Y Min:')
-        max_label=QtGui.QLabel('Y Max:')
-        layout.addWidget(self.isi_check, uedge, ledge)
-        layout.addWidget(min_label,uedge+1, ledge)
-        layout.addWidget(max_label,uedge+1, ledge+1)
-        layout.addWidget(self.y_min_edit, uedge+2, ledge)
-        layout.addWidget(self.y_max_edit, uedge+2, ledge+1)
-        layout.setContentsMargins(0,0,50,10)
-        layout.setColumnStretch(1,30)
-        group_box.setMaximumHeight(100)
-        group_box.setLayout(layout)
-
         return group_box

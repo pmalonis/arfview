@@ -20,7 +20,7 @@ class rasterPlot(pg.PlotItem):
         for idx,trial_toes in enumerate(toes):
             self.add_trial(trial_toes)
 
-        self.getViewBox()
+        self.setMouseEnabled(y=False)
 
     def add_trial(self, toes):
         self.ntrials += 1

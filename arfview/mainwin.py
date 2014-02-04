@@ -129,7 +129,7 @@ class MainWindow(QtGui.QMainWindow):
         tree_dock = pgd.Dock("Tree", size=(200, 1))
         data_dock = pgd.Dock("Data", size=(500, 200))
         attr_table_dock = pgd.Dock("Attributes", size=(200, 1))
-        settings_dock = pgd.Dock('Settings', size=(300,200))
+        settings_dock = pgd.Dock('Settings', size=(150,300))
         self.area.addDock(tree_dock, 'left')
         self.area.addDock(data_dock, 'right')
         self.area.addDock(attr_table_dock, 'bottom', tree_dock)
@@ -144,7 +144,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.setCentralWidget(self.area)
         self.setWindowTitle('arfview')
-        self.resize(1200, 800)
+        self.resize(1200, 500)
         self.show()
 
     def toggleplotchecked(self):
