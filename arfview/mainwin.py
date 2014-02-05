@@ -17,6 +17,8 @@ import tempfile
 from arfview.datatree import DataTreeView, createtemparf
 import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
+from scipy.interpolate import interp2d
+import scipy.signal
 from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
@@ -250,8 +252,7 @@ class MainWindow(QtGui.QMainWindow):
         # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
         # shape that works
 
-        raster_plot = None
-        psth = None
+        toes = []
         for dataset in dataset_list:
             print(dataset)
             if 'datatype' not in dataset.attrs.keys():
@@ -263,9 +264,8 @@ class MainWindow(QtGui.QMainWindow):
             '''sampled data'''
             if dataset.attrs['datatype'] < 1000: # sampled data
                 if (self.settings_panel.oscillogram_check.checkState()
-                    ==QtCore.Qt.Unchecked):
-                    continue
-            
+                    ==QtCore.Qt.Unchecked): continue
+                    
                 sr = float(dataset.attrs['sampling_rate'])
                 t = np.arange(0, len(dataset)) / sr
                 pl = data_layout.addPlot(title=dataset.name,
@@ -282,20 +282,18 @@ class MainWindow(QtGui.QMainWindow):
                     data = dataset.value / dataset.attrs['sampling_rate']
                 else:
                     data = dataset.value
-                if (self.settings_panel.raster_check.checkState()
-                    ==QtCore.Qt.Checked):
-                    if raster_plot:
-                        raster_plot.add_trial(data)
-                    else:
-                        raster_plot = rasterPlot(data)
-                elif (self.settings_panel.psth_check.checkState()
-                      ==QtCore.Qt.Checked):
+                if (self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked or
+                    self.settings_panel.psth_check.checkState()==QtCore.Qt.Checked or
+                    self.settings_panel.isi_check.checkState()==QtCore.Qt.Checked):                    
                     #TODO make psth
-                    pass
+                    toes.append(data)
                 continue
 
                 ''' complex event '''
             elif utils.is_complex_event(dataset):
+                if (self.settings_panel.label_check.checkState()
+                    ==QtCore.Qt.Unchecked): continue
+                
                 #creating new extensible dataset if not extensible
                 if dataset.maxshape != (None,):
                     data = dataset[:]
@@ -328,12 +326,39 @@ class MainWindow(QtGui.QMainWindow):
             '''adding spectrograms'''
             if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
                 if (self.settings_panel.spectrogram_check.checkState()
-                    ==QtCore.Qt.Unchecked):
-                    continue
-                Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=512, noverlap=400)
-                img = pg.ImageItem(np.log(Pxx.T))
+                    ==QtCore.Qt.Unchecked): continue
+                #getting spectrogram settings
+                win_size = int(float(self.settings_panel.win_size.text()))
+                t_step = int(float(self.settings_panel.step.text())/1000. * sr)
+                noverlap = win_size-t_step
+                window_name = self.settings_panel.window.currentText()
+                if window_name == "Hann":
+                    window = scipy.signal.hann(win_size)
+                elif window_name == "Bartlett":
+                    window = scipy.signal.bartlett(win_size)
+                elif window_name == "Blackman":
+                    window = scipy.signal.blackman(win_size)
+                elif window_name == "Boxcar":
+                    window = scipy.signal.boxcar(win_size)
+                elif window_name == "Hamming":
+                    window = scipy.signal.hamming(win_size)
+                elif window_name == "Parzen":
+                    window = scipy.signal.parzen(win_size)
+                #computing and interpolating image
+                Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=win_size,
+                                          window=window,noverlap=noverlap)
+                spec = np.log(Pxx.T)
+                spec, freqs = interpolate_spectrogram(spec,freqs,res_factor=5)
+
+                #making color lookup table
+                pos = np.linspace(0,1,7)
+                color = np.array([[100,100,255,255],[0,0,255,255],[0,255,255,255],[0,255,0,255],
+                                  [255,255,0,255],[255,0,0,255],[100,0,0,255]], dtype=np.ubyte)
+                color_map = pg.ColorMap(pos,color)
+                lut = color_map.getLookupTable(0.0,1.0,256)
+                img = pg.ImageItem(spec,lut=lut)
                 #img.setLevels((-5, 10))
-                img.setScale(ts[-1] / Pxx.shape[1])
+                img.setScale(ts[-1] / spec.shape[0])
                 vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
                 subplots.append(vb)
 
@@ -343,15 +368,15 @@ class MainWindow(QtGui.QMainWindow):
                 vb.setMouseEnabled(x=True, y=False)
                 vb.setXLink(masterXLink)
 
-        if raster_plot:
-            subplots.append(raster_plot)
-            data_layout.addItem(raster_plot, row=len(subplots), col=0)
-            raster_plot.showLabel('left', show=False)
-            '''linking x axes'''
-            if len(subplots) == 1:
-                masterXLink = raster_plot
-            else:
-                pl.setXLink(masterXLink)
+        # if toes:
+        #     subplots.append(raster_plot)
+        #     data_layout.addItem(raster_plot, row=len(subplots), col=0)
+        #     raster_plot.showLabel('left', show=False)
+        #     '''linking x axes'''
+        #     if len(subplots) == 1:
+        #         masterXLink = raster_plot
+        #     else:
+        #         pl.setXLink(masterXLink)
 
 
 ## Make all plots clickable
@@ -407,7 +432,18 @@ def sigint_handler(*args):
     sys.stderr.write('\r')
     QtGui.QApplication.quit()
 
+def interpolate_spectrogram(spec, freqs, res_factor):
+    """Interpolates spectrogram for plotting"""
+    x = np.arange(spec.shape[1])
+    y = np.arange(spec.shape[0])
+    f = interp2d(x, y, spec, copy=False, kind = 'quintic')
+    xnew = np.arange(0,spec.shape[1],1./res_factor)
+    ynew = np.arange(0,spec.shape[0],1./res_factor)
+    new_spec = f(xnew,ynew)
+    freq = np.linspace(freqs[0], freqs[-1], new_spec.shape[1])
 
+    return new_spec, freq
+    
 def main():
     signal.signal(signal.SIGINT, sigint_handler)
     app = QtGui.QApplication(sys.argv)

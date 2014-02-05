@@ -11,7 +11,7 @@ class rasterTick(pg.PlotDataItem):
 class rasterPlot(pg.PlotItem):
     def __init__(self, toes):
         super(rasterPlot, self).__init__()
-        if not isinstance(toes, np.ndarray) or toes.ndim > 2:
+        if not isinstance(toes, list) or toes.ndim > 1:
             raise ValueError('Event times must be given as ndarray of dimension 2 or less')
         elif toes.ndim == 1:
             toes = np.expand_dims(toes, 0)
@@ -25,7 +25,7 @@ class rasterPlot(pg.PlotItem):
     def add_trial(self, toes):
         self.ntrials += 1
         for idx, t in enumerate(toes):
-            self.addItem(rasterTick(t, self.ntrials))
+            self.plot([t,t], [self.ntrials-.5, self.ntrials+.5])
 
        
         
