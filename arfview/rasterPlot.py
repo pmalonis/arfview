@@ -9,12 +9,10 @@ class rasterTick(pg.PlotDataItem):
         self.setData(x, y)
 
 class rasterPlot(pg.PlotItem):
-    def __init__(self, toes):
-        super(rasterPlot, self).__init__()
-        if not isinstance(toes, list) or toes.ndim > 1:
-            raise ValueError('Event times must be given as ndarray of dimension 2 or less')
-        elif toes.ndim == 1:
-            toes = np.expand_dims(toes, 0)
+    def __init__(self, toes, *args, **kwargs):
+        super(rasterPlot, self).__init__(*args,**kwargs)
+        # if not isinstance(toes, list) or toes.ndim > 1:
+        #     raise ValueError('Event times must be given as ndarray of dimension 2 or less')
 
         self.ntrials = 0
         for idx,trial_toes in enumerate(toes):

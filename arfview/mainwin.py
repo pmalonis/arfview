@@ -264,15 +264,15 @@ class MainWindow(QtGui.QMainWindow):
             '''sampled data'''
             if dataset.attrs['datatype'] < 1000: # sampled data
                 if (self.settings_panel.oscillogram_check.checkState()
-                    ==QtCore.Qt.Unchecked): continue
+                    ==QtCore.Qt.Checked): 
                     
-                sr = float(dataset.attrs['sampling_rate'])
-                t = np.arange(0, len(dataset)) / sr
-                pl = data_layout.addPlot(title=dataset.name,
-                                              name=str(len(subplots)), row=len(subplots), col=0)
-                subplots.append(pl)
-                pl.plot(t, dataset)
-                pl.showGrid(x=True, y=True)
+                    sr = float(dataset.attrs['sampling_rate'])
+                    t = np.arange(0, len(dataset)) / sr
+                    pl = data_layout.addPlot(title=dataset.name,
+                                                  name=str(len(subplots)), row=len(subplots), col=0)
+                    subplots.append(pl)
+                    pl.plot(t, dataset)
+                    pl.showGrid(x=True, y=True)
 
                 ''' simple events '''
             elif utils.is_simple_event(dataset):
@@ -285,30 +285,29 @@ class MainWindow(QtGui.QMainWindow):
                 if (self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked or
                     self.settings_panel.psth_check.checkState()==QtCore.Qt.Checked or
                     self.settings_panel.isi_check.checkState()==QtCore.Qt.Checked):                    
-                    #TODO make psth
                     toes.append(data)
                 continue
 
                 ''' complex event '''
             elif utils.is_complex_event(dataset):
                 if (self.settings_panel.label_check.checkState()
-                    ==QtCore.Qt.Unchecked): continue
+                    ==QtCore.Qt.Checked):
                 
-                #creating new extensible dataset if not extensible
-                if dataset.maxshape != (None,):
-                    data = dataset[:]
-                    name = dataset.name
-                    group= dataset.parent
-                    attributes = dataset.attrs
-                    del group[name]
-                    del dataset
-                    dataset = arf.create_dataset(group, name, data,
-                                                 maxshape=(None,),**attributes)
+                    #creating new extensible dataset if not extensible
+                    if dataset.maxshape != (None,):
+                        data = dataset[:]
+                        name = dataset.name
+                        group= dataset.parent
+                        attributes = dataset.attrs
+                        del group[name]
+                        del dataset
+                        dataset = arf.create_dataset(group, name, data,
+                                                     maxshape=(None,),**attributes)
 
-                pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
-                data_layout.addItem(pl, row=len(subplots), col=0) 
-                pl.showLabel('left', show=False)
-                subplots.append(pl)
+                    pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
+                    data_layout.addItem(pl, row=len(subplots), col=0) 
+                    pl.showLabel('left', show=False)
+                    subplots.append(pl)
 
             else:
                 print('I don\'t know how to plot {} of type {} \
@@ -326,57 +325,119 @@ class MainWindow(QtGui.QMainWindow):
             '''adding spectrograms'''
             if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
                 if (self.settings_panel.spectrogram_check.checkState()
-                    ==QtCore.Qt.Unchecked): continue
-                #getting spectrogram settings
-                win_size = int(float(self.settings_panel.win_size.text()))
-                t_step = int(float(self.settings_panel.step.text())/1000. * sr)
-                noverlap = win_size-t_step
-                window_name = self.settings_panel.window.currentText()
-                if window_name == "Hann":
-                    window = scipy.signal.hann(win_size)
-                elif window_name == "Bartlett":
-                    window = scipy.signal.bartlett(win_size)
-                elif window_name == "Blackman":
-                    window = scipy.signal.blackman(win_size)
-                elif window_name == "Boxcar":
-                    window = scipy.signal.boxcar(win_size)
-                elif window_name == "Hamming":
-                    window = scipy.signal.hamming(win_size)
-                elif window_name == "Parzen":
-                    window = scipy.signal.parzen(win_size)
-                #computing and interpolating image
-                Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=win_size,
-                                          window=window,noverlap=noverlap)
-                spec = np.log(Pxx.T)
-                spec, freqs = interpolate_spectrogram(spec,freqs,res_factor=5)
+                    ==QtCore.Qt.Checked):
+                    #getting spectrogram settings
+                    win_size_text = self.settings_panel.win_size.text()
+                    t_step_text = self.settings_panel.step.text()
 
-                #making color lookup table
-                pos = np.linspace(0,1,7)
-                color = np.array([[100,100,255,255],[0,0,255,255],[0,255,255,255],[0,255,0,255],
-                                  [255,255,0,255],[255,0,0,255],[100,0,0,255]], dtype=np.ubyte)
-                color_map = pg.ColorMap(pos,color)
-                lut = color_map.getLookupTable(0.0,1.0,256)
-                img = pg.ImageItem(spec,lut=lut)
-                #img.setLevels((-5, 10))
-                img.setScale(ts[-1] / spec.shape[0])
-                vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
-                subplots.append(vb)
+                    if win_size_text:
+                        win_size = int(float(win_size_text))
+                    else:
+                        win_size = 256
+                        self.settings_panel.win_size.setText("256")
 
-                g = pg.GridItem()
-                vb.addItem(g)
-                vb.addItem(img)
-                vb.setMouseEnabled(x=True, y=False)
-                vb.setXLink(masterXLink)
+                    if t_step_text:
+                        t_step = int(float(t_step_text) * sr/1000.)
+                    else:
+                        t_step = .001
+                        self.settings_panel.win_size.setText("1")
 
-        # if toes:
-        #     subplots.append(raster_plot)
-        #     data_layout.addItem(raster_plot, row=len(subplots), col=0)
-        #     raster_plot.showLabel('left', show=False)
-        #     '''linking x axes'''
-        #     if len(subplots) == 1:
-        #         masterXLink = raster_plot
-        #     else:
-        #         pl.setXLink(masterXLink)
+                    noverlap = win_size-t_step
+                    window_name = self.settings_panel.window.currentText()                
+                    if window_name == "Hann":
+                        window = scipy.signal.hann(win_size)
+                    elif window_name == "Bartlett":
+                        window = scipy.signal.bartlett(win_size)
+                    elif window_name == "Blackman":
+                        window = scipy.signal.blackman(win_size)
+                    elif window_name == "Boxcar":
+                        window = scipy.signal.boxcar(win_size)
+                    elif window_name == "Hamming":
+                        window = scipy.signal.hamming(win_size)
+                    elif window_name == "Parzen":
+                        window = scipy.signal.parzen(win_size)
+                    #computing and interpolating image
+                    Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=win_size,
+                                              window=window,noverlap=noverlap)
+                    spec = np.log(Pxx.T)
+                    spec, freqs = interpolate_spectrogram(spec,freqs,res_factor=5)
+
+                    #making color lookup table
+                    pos = np.linspace(0,1,7)
+                    color = np.array([[100,100,255,255],[0,0,255,255],[0,255,255,255],[0,255,0,255],
+                                      [255,255,0,255],[255,0,0,255],[100,0,0,255]], dtype=np.ubyte)
+                    color_map = pg.ColorMap(pos,color)
+                    lut = color_map.getLookupTable(0.0,1.0,256)
+                    img = pg.ImageItem(spec,lut=lut)
+                    #img.setLevels((-5, 10))
+                    img.setScale(ts[-1] / spec.shape[0])
+                    vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
+                    subplots.append(vb)
+
+                    g = pg.GridItem()
+                    vb.addItem(g)
+                    vb.addItem(img)
+                    vb.setMouseEnabled(x=True, y=False)
+                    vb.setXLink(masterXLink)
+        
+        if self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked:
+            raster = rasterPlot(toes)
+            data_layout.addItem(raster, row=len(subplots), col=0) 
+            raster.showLabel('left', show=False)
+            subplots.append(raster)
+            if len(subplots) == 1:
+                masterXLink = raster
+            else:
+                raster.setXLink(masterXLink)
+                
+        if self.settings_panel.psth_check.checkState()==QtCore.Qt.Checked:
+            all_toes = np.zeros(sum(len(t) for t in toes))
+            k=0
+            for t in toes:
+                all_toes[k:k+len(t)] = t
+                k += len(t)
+            if self.settings_panel.psth_bin_size.text():
+                bin_size = float(self.settings_panel.psth_bin_size.text())/1000.
+            else:
+                bin_size = .01
+            bins = np.arange(all_toes.min(),all_toes.max()+bin_size,bin_size)
+            y,x = np.histogram(all_toes,bins=bins)
+            psth = pg.PlotCurveItem(x, y, stepMode=True,
+                                    fillLevel=0, brush=(0, 0, 255, 80))
+    
+            pl = data_layout.addPlot(row=len(subplots), col=0)
+            pl.addItem(psth)
+            pl.setMouseEnabled(y=False)
+            subplots.append(psth)
+            if len(subplots) == 1:
+                masterXLink = pl
+            else:
+                pl.setXLink(masterXLink)
+                
+        if self.settings_panel.isi_check.checkState()==QtCore.Qt.Checked:
+            isis = np.zeros(sum(len(t)-1 for t in toes))
+            k=0
+            for t in toes:
+                isis[k:k+len(t)-1] = np.diff(t)
+                k += len(t)-1
+            if self.settings_panel.psth_bin_size.text():
+                bin_size = float(self.settings_panel.psth_bin_size.text())/1000.
+            else:
+                bin_size = .01
+            bins = np.arange(isis.min(),isis.max()+bin_size,bin_size)
+            y,x = np.histogram(isis,bins=bins,normed=True)
+            isi_hist = pg.PlotCurveItem(x, y, stepMode=True,
+                                    fillLevel=0, brush=(0, 0, 255, 80))
+    
+            pl = data_layout.addPlot(row=len(subplots), col=0)
+            pl.addItem(isi_hist)
+            pl.setMouseEnabled(y=False)
+            subplots.append(isi_hist)
+            if len(subplots) == 1:
+                masterXLink = pl
+            else:
+                pl.setXLink(masterXLink)
+        
 
 
 ## Make all plots clickable
