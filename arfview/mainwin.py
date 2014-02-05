@@ -87,6 +87,12 @@ class MainWindow(QtGui.QMainWindow):
         labelAction.setStatusTip('Add label entry to current group')
         labelAction.triggered.connect(self.add_label)
         self.labelAction = labelAction
+
+        addPlotAction = QtGui.QAction('Add Plot', self)
+        addPlotAction.setVisible(False)
+        addPlotAction.setStatusTip('Add checked datasets to current plot')
+        addPlotAction.triggered.connect(self.add_plot)
+        self.addPlotAction = addPlotAction
         
         # menubar
         menubar = self.menuBar()
@@ -106,6 +112,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addAction(plotcheckedAction)
         self.toolbar.addAction(refreshAction)
         self.toolbar.addAction(labelAction)
+        self.toolbar.addAction(addPlotAction)
 
         # file tree
         self.tree_view = DataTreeView()
@@ -122,6 +129,7 @@ class MainWindow(QtGui.QMainWindow):
 
         #plot region
         self.data_layout = pg.GraphicsLayoutWidget()
+        self.subplots=[]
 
         #settings panel
         self.settings_panel = settingsPanel()
@@ -157,11 +165,13 @@ class MainWindow(QtGui.QMainWindow):
             self.plotcheckedAction.setStatusTip('click to turn check mode off')
             self.plotcheckedAction.setText('check mode is on')
             self.plotcheckedAction.setIconText('check mode is on')
+            self.addPlotAction.setVisible(True)
         else:
             self.plotcheckedAction.setIcon(QtGui.QIcon.fromTheme('face-smile'))
             self.plotcheckedAction.setStatusTip('click to turn check mode on')
             self.plotcheckedAction.setText('check mode is off')
             self.plotcheckedAction.setIconText('check mode is off')
+            self.addPlotAction.setVisible(False)
 
 
     def export(self):
@@ -214,6 +224,12 @@ class MainWindow(QtGui.QMainWindow):
                 datasets = [x for x in item.values() if type(x) == h5py.Dataset]
             self.plot_dataset_list(datasets, self.data_layout)
 
+    def add_plot(self):
+        checked_datasets = self.tree_view.all_checked_dataset_elements()
+        if len(checked_datasets) > 0 and self.plotchecked:
+            new_layout = self.data_layout.addLayout(row=len(self.subplots),col=0)
+            self.plot_dataset_list(checked_datasets, new_layout)
+ 
 
     def selectEntry(self, treeItem):
         item = treeItem.getData()
@@ -245,10 +261,11 @@ class MainWindow(QtGui.QMainWindow):
         self.tree_view.add(dset, parent_node=lbl_parent)
         self.refresh_data_view()
 
-    def plot_dataset_list(self, dataset_list, data_layout):
+    def plot_dataset_list(self, dataset_list, data_layout, append=False):
         ''' plots a list of datasets to a data layout'''
         data_layout.clear()
-        subplots = []
+        if not append:
+            self.subplots = []
         # rasterQPainterPath = QtGui.QPainterPath().addRect(-.1,-5,.2,1)  # TODO make a better raster
         # shape that works
 
@@ -269,8 +286,8 @@ class MainWindow(QtGui.QMainWindow):
                     sr = float(dataset.attrs['sampling_rate'])
                     t = np.arange(0, len(dataset)) / sr
                     pl = data_layout.addPlot(title=dataset.name,
-                                                  name=str(len(subplots)), row=len(subplots), col=0)
-                    subplots.append(pl)
+                                                  name=str(len(self.subplots)), row=len(self.subplots), col=0)
+                    self.subplots.append(pl)
                     pl.plot(t, dataset)
                     pl.showGrid(x=True, y=True)
 
@@ -304,10 +321,10 @@ class MainWindow(QtGui.QMainWindow):
                         dataset = arf.create_dataset(group, name, data,
                                                      maxshape=(None,),**attributes)
 
-                    pl = labelPlot(dataset, title=dataset.name, name=str(len(subplots)))
-                    data_layout.addItem(pl, row=len(subplots), col=0) 
+                    pl = labelPlot(dataset, title=dataset.name, name=str(len(self.subplots)))
+                    data_layout.addItem(pl, row=len(self.subplots), col=0) 
                     pl.showLabel('left', show=False)
-                    subplots.append(pl)
+                    self.subplots.append(pl)
 
             else:
                 print('I don\'t know how to plot {} of type {} \
@@ -316,17 +333,12 @@ class MainWindow(QtGui.QMainWindow):
                                          dataset.attrs['datatype']))
                 continue
 
-            '''linking x axes'''
-            if len(subplots) == 1:
-                masterXLink = pl
-            else:
-                pl.setXLink(masterXLink)
-
             '''adding spectrograms'''
             if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
                 if (self.settings_panel.spectrogram_check.checkState()
                     ==QtCore.Qt.Checked):
                     #getting spectrogram settings
+                    sr = float(dataset.attrs['sampling_rate'])
                     win_size_text = self.settings_panel.win_size.text()
                     t_step_text = self.settings_panel.step.text()
 
@@ -356,11 +368,13 @@ class MainWindow(QtGui.QMainWindow):
                         window = scipy.signal.hamming(win_size)
                     elif window_name == "Parzen":
                         window = scipy.signal.parzen(win_size)
+                    
                     #computing and interpolating image
                     Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=win_size,
                                               window=window,noverlap=noverlap)
                     spec = np.log(Pxx.T)
-                    spec, freqs = interpolate_spectrogram(spec,freqs,res_factor=5)
+                    res_factor = 5.0 #factor by which resolution is increased
+                    spec = interpolate_spectrogram(spec, res_factor=res_factor)
 
                     #making color lookup table
                     pos = np.linspace(0,1,7)
@@ -370,49 +384,41 @@ class MainWindow(QtGui.QMainWindow):
                     lut = color_map.getLookupTable(0.0,1.0,256)
                     img = pg.ImageItem(spec,lut=lut)
                     #img.setLevels((-5, 10))
-                    img.setScale(ts[-1] / spec.shape[0])
-                    vb = data_layout.addViewBox(name=str(len(subplots)), row=len(subplots), col=0)
-                    subplots.append(vb)
 
-                    g = pg.GridItem()
-                    vb.addItem(g)
-                    vb.addItem(img)
-                    vb.setMouseEnabled(x=True, y=False)
-                    vb.setXLink(masterXLink)
-        
-        if self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked:
-            raster = rasterPlot(toes)
-            data_layout.addItem(raster, row=len(subplots), col=0) 
-            raster.showLabel('left', show=False)
-            subplots.append(raster)
-            if len(subplots) == 1:
-                masterXLink = raster
-            else:
-                raster.setXLink(masterXLink)
-                
-        if self.settings_panel.psth_check.checkState()==QtCore.Qt.Checked:
-            all_toes = np.zeros(sum(len(t) for t in toes))
-            k=0
-            for t in toes:
-                all_toes[k:k+len(t)] = t
-                k += len(t)
-            if self.settings_panel.psth_bin_size.text():
-                bin_size = float(self.settings_panel.psth_bin_size.text())/1000.
-            else:
-                bin_size = .01
-            bins = np.arange(all_toes.min(),all_toes.max()+bin_size,bin_size)
-            y,x = np.histogram(all_toes,bins=bins)
-            psth = pg.PlotCurveItem(x, y, stepMode=True,
-                                    fillLevel=0, brush=(0, 0, 255, 80))
-    
-            pl = data_layout.addPlot(row=len(subplots), col=0)
-            pl.addItem(psth)
-            pl.setMouseEnabled(y=False)
-            subplots.append(psth)
-            if len(subplots) == 1:
-                masterXLink = pl
-            else:
-                pl.setXLink(masterXLink)
+                    pl = data_layout.addPlot(name=str(len(self.subplots)), row=len(self.subplots), col=0)
+                    self.subplots.append(pl)
+
+                    pl.addItem(img)
+                    image_scale = ts[-1] / spec.shape[0]
+                    img.setScale(image_scale)
+                    pl.getAxis('left').setScale((freqs[1]-freqs[0])/res_factor/image_scale)
+                    pl.setMouseEnabled(x=True, y=False)
+        if toes:
+            if self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked:
+                pl= rasterPlot(toes)
+                data_layout.addItem(pl, row=len(self.subplots), col=0) 
+                pl.showLabel('left', show=False)
+                self.subplots.append(pl)
+
+            if self.settings_panel.psth_check.checkState()==QtCore.Qt.Checked:
+                all_toes = np.zeros(sum(len(t) for t in toes))
+                k=0
+                for t in toes:
+                    all_toes[k:k+len(t)] = t
+                    k += len(t)
+                if self.settings_panel.psth_bin_size.text():
+                    bin_size = float(self.settings_panel.psth_bin_size.text())/1000.
+                else:
+                    bin_size = .01
+                bins = np.arange(all_toes.min(),all_toes.max()+bin_size,bin_size)
+                y,x = np.histogram(all_toes,bins=bins)
+                psth = pg.PlotCurveItem(x, y, stepMode=True,
+                                        fillLevel=0, brush=(0, 0, 255, 80))
+
+                pl = data_layout.addPlot(row=len(self.subplots), col=0)
+                pl.addItem(psth)
+                pl.setMouseEnabled(y=False)
+                self.subplots.append(pl)
                 
         if self.settings_panel.isi_check.checkState()==QtCore.Qt.Checked:
             isis = np.zeros(sum(len(t)-1 for t in toes))
@@ -429,16 +435,17 @@ class MainWindow(QtGui.QMainWindow):
             isi_hist = pg.PlotCurveItem(x, y, stepMode=True,
                                     fillLevel=0, brush=(0, 0, 255, 80))
     
-            pl = data_layout.addPlot(row=len(subplots), col=0)
+            pl = data_layout.addPlot(row=len(self.subplots), col=0)
             pl.addItem(isi_hist)
             pl.setMouseEnabled(y=False)
-            subplots.append(isi_hist)
-            if len(subplots) == 1:
-                masterXLink = pl
-            else:
-                pl.setXLink(masterXLink)
-        
+            self.subplots.append(pl)
 
+        '''linking x axes'''
+        masterXLink = None
+        for pl in self.subplots:
+            if not masterXLink:
+                masterXLink = pl
+            pl.setXLink(masterXLink)
 
 ## Make all plots clickable
 lastClicked = []
@@ -493,7 +500,7 @@ def sigint_handler(*args):
     sys.stderr.write('\r')
     QtGui.QApplication.quit()
 
-def interpolate_spectrogram(spec, freqs, res_factor):
+def interpolate_spectrogram(spec, res_factor):
     """Interpolates spectrogram for plotting"""
     x = np.arange(spec.shape[1])
     y = np.arange(spec.shape[0])
@@ -501,9 +508,8 @@ def interpolate_spectrogram(spec, freqs, res_factor):
     xnew = np.arange(0,spec.shape[1],1./res_factor)
     ynew = np.arange(0,spec.shape[0],1./res_factor)
     new_spec = f(xnew,ynew)
-    freq = np.linspace(freqs[0], freqs[-1], new_spec.shape[1])
 
-    return new_spec, freq
+    return new_spec
     
 def main():
     signal.signal(signal.SIGINT, sigint_handler)
