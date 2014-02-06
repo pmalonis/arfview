@@ -249,7 +249,7 @@ class MainWindow(QtGui.QMainWindow):
         if isinstance(item.getData(), h5py.Group):
             lbl_parent = item
         elif isinstance(item.getData(), h5py.Dataset):
-            lbl_parent = item.parent
+            lbl_parent = item.parent()
         lbl_rec = np.zeros((0,),dtype=[('name', 'a8'), ('start',float), ('stop', float)])
         dset_name = 'lbl'
         #naming new label dataset if 'lbl' is already in group

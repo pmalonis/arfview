@@ -4,15 +4,26 @@ import numpy as np
 class downsamplePlot(pg.PlotItem):
     def __init__(self, dataset, *args, **kwargs):
         super(downsamplePlot, self).__init__(*args, **kwargs)
-        sr = float(dataset.attrs['sampling_rate'])
-        factor=int(np.ceil(dataset.len()/100000.0))
-        t = np.arange(0, dataset.len(), factor) / sr
-        self.plot(t, dataset[::factor])
-        # self.data_item = pg.PlotDataItem(self.times,dataset)
-        # ax = self.getAxis('bottom')
-        # npoints = sum(np.logical_and(ax.range[0]<self.times,ax.range[1]>self.times))
-        # max_points=100000.0
-        # self.data_item.setDownsampling(max(1,npoints/max_points))
-        # self.addItem(self.data_item)
+        self.dataset = dataset
+        self.data_item = pg.PlotDataItem()
+        self.downsample()
+        self.addItem(self.data_item)
+        self.getViewBox().sigXRangeChanged.connect(self.downsample)
+
+    def downsample(self):
+        sr = float(self.dataset.attrs['sampling_rate'])
+        t_min,t_max = self.getAxis('bottom').range
+        t_min = max(0, t_min)
+        t_max = min(self.dataset.len()/sr, t_max)
+        i_min = int(t_min*sr)
+        i_max = int(t_max*sr)
+        npoints = i_max-i_min
+        max_points=50000.0
+        step=int(np.ceil(npoints/max_points))
+        t = np.linspace(t_min, t_max, np.ceil(npoints/float(step)))
+        if npoints>0:
+            self.data_item.setData(t, self.dataset[i_min:i_max:step])
+        else:
+            self.data_item.clear()
 
     
