@@ -23,7 +23,9 @@ from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
+from arfview.downsamplePlot import downsamplePlot
 import arf
+import libtfr
 
 import lbl
 print(lbl.__version__)
@@ -283,12 +285,10 @@ class MainWindow(QtGui.QMainWindow):
                 if (self.settings_panel.oscillogram_check.checkState()
                     ==QtCore.Qt.Checked): 
                     
-                    sr = float(dataset.attrs['sampling_rate'])
-                    t = np.arange(0, len(dataset)) / sr
-                    pl = data_layout.addPlot(title=dataset.name,
-                                                  name=str(len(self.subplots)), row=len(self.subplots), col=0)
+                    pl = downsamplePlot(dataset, title=dataset.name,
+                                        name=str(len(self.subplots)))
+                    data_layout.addItem(pl,row=len(self.subplots), col=0)
                     self.subplots.append(pl)
-                    pl.plot(t, dataset)
                     pl.showGrid(x=True, y=True)
 
                 ''' simple events '''
@@ -354,7 +354,7 @@ class MainWindow(QtGui.QMainWindow):
                         t_step = .001
                         self.settings_panel.win_size.setText("1")
 
-                    noverlap = win_size-t_step
+                    
                     window_name = self.settings_panel.window.currentText()                
                     if window_name == "Hann":
                         window = scipy.signal.hann(win_size)
@@ -370,8 +370,7 @@ class MainWindow(QtGui.QMainWindow):
                         window = scipy.signal.parzen(win_size)
                     
                     #computing and interpolating image
-                    Pxx, freqs, ts = specgram(dataset, Fs=sr, NFFT=win_size,
-                                              window=window,noverlap=noverlap)
+                    Pxx = libtfr.stft(dataset,w=window,step=t_step)
                     spec = np.log(Pxx.T)
                     res_factor = 5.0 #factor by which resolution is increased
                     spec = interpolate_spectrogram(spec, res_factor=res_factor)
@@ -389,10 +388,12 @@ class MainWindow(QtGui.QMainWindow):
                     self.subplots.append(pl)
 
                     pl.addItem(img)
-                    image_scale = ts[-1] / spec.shape[0]
-                    img.setScale(image_scale)
-                    pl.getAxis('left').setScale((freqs[1]-freqs[0])/res_factor/image_scale)
+                    image_scale = t_step/sr/res_factor
+                    img.setScale(t_step/sr/res_factor)
+                    df = sr/float(win_size)
+                    pl.getAxis('left').setScale(df/res_factor/image_scale)
                     pl.setMouseEnabled(x=True, y=False)
+                    
         if toes:
             if self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked:
                 pl= rasterPlot(toes)
@@ -430,7 +431,7 @@ class MainWindow(QtGui.QMainWindow):
                 bin_size = float(self.settings_panel.psth_bin_size.text())/1000.
             else:
                 bin_size = .01
-            bins = np.arange(isis.min(),isis.max()+bin_size,bin_size)
+            bins = np.arange(isis.min(),isis.max()+bin_size,bin_size) 
             y,x = np.histogram(isis,bins=bins,normed=True)
             isi_hist = pg.PlotCurveItem(x, y, stepMode=True,
                                     fillLevel=0, brush=(0, 0, 255, 80))
