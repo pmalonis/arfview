@@ -1,7 +1,7 @@
 from PySide import QtCore,QtGui
 import pyqtgraph as pg
 from arfview import datatree
-
+import numpy as np
 
 class treeToolBar(QtGui.QToolBar):
     def __init__(self, tree_view): 
@@ -99,8 +99,14 @@ class attributeMenu(QtGui.QComboBox):
             dataset = d.getData()
             attribute_objects= [dataset.attrs, dataset.parent.attrs]
             for attrs in attribute_objects:
-                if (self.attribute in attrs.keys() and attrs[self.attribute]
-                    not in values):
+                if self.attribute not in attrs.keys(): continue
+                #avoiding problems with array comparison
+                if isinstance(attrs[self.attribute], np.ndarray):
+                    is_new_value = not np.any([np.array_equal(attrs[self.attribute],v)
+                                               for v in values])
+                else:
+                    is_new_value = attrs[self.attribute] not in values
+                if is_new_value:
                     values.append(attrs[self.attribute])
                     if self.attribute == 'datatype':
                         new_value = datatree.named_types[attrs[self.attribute]]

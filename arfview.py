@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from arfview import mainwin
 if __name__ == '__main__':

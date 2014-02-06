@@ -138,14 +138,14 @@ class MainWindow(QtGui.QMainWindow):
 
         # final steps
         self.area = pgd.DockArea()
-        tree_dock = pgd.Dock("Tree", size=(200, 1))
+        tree_dock = pgd.Dock("Tree", size=(200, 100))
         data_dock = pgd.Dock("Data", size=(500, 200))
-        attr_table_dock = pgd.Dock("Attributes", size=(200, 1))
-        settings_dock = pgd.Dock('Settings', size=(150,300))
+        attr_table_dock = pgd.Dock("Attributes", size=(200, 50))
+        settings_dock = pgd.Dock('Settings', size=(150,1))
         self.area.addDock(tree_dock, 'left')
         self.area.addDock(data_dock, 'right')
         self.area.addDock(attr_table_dock, 'bottom', tree_dock)
-        self.area.addDock(settings_dock, 'right', data_dock)
+        self.area.addDock(settings_dock, 'bottom', attr_table_dock)
         tree_dock.addWidget(self.tree_view)
         tree_dock.addWidget(self.tree_toolbar)
         tree_dock.addAction(exitAction)
@@ -156,7 +156,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.setCentralWidget(self.area)
         self.setWindowTitle('arfview')
-        self.resize(1200, 500)
+        self.resize(1200, 700)
         self.show()
 
     def toggleplotchecked(self):
@@ -198,6 +198,7 @@ class MainWindow(QtGui.QMainWindow):
         fname, fileextension = QtGui.QFileDialog.\
                                getOpenFileName(self, 'Open file', '.',
                                                '*.arf ;; *.lbl ;; *.hdf5, *.h5 ;; *.mat')
+        if not fname: return
         print(fileextension)
         extention = os.path.splitext(fname)[-1]
         if extention == '.lbl':
