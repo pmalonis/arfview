@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """an alpha version of the plotter"""
 
 from __future__ import absolute_import, division, \
@@ -28,7 +27,7 @@ import arf
 import libtfr
 
 import lbl
-print(lbl.__version__)
+#print(lbl.__version__)
 
 class MainWindow(QtGui.QMainWindow):
     '''the main window of the program'''
