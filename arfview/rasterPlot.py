@@ -28,10 +28,10 @@ class rasterPlot(pg.PlotItem):
         self.addItem(self.graph_item)
         self.setMouseEnabled(y=False)
 
-    def add_trial(self, toes):
-        self.ntrials += 1
-        for idx, t in enumerate(toes):
-            self.plot([t,t], [self.ntrials-.5, self.ntrials+.5])
+    # def add_trial(self, toes):
+    #     self.ntrials += 1
+    #     for idx, t in enumerate(toes):
+    #         self.plot([t,t], [self.ntrials-.5, self.ntrials+.5])
        
         
 
