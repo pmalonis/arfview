@@ -7,19 +7,19 @@ import sys
 
 import arfview
 
-here = os.path.abspath(os.path.dirname(__file__))
+# here = os.path.abspath(os.path.dirname(__file__))
 
 
-def read(*filenames, **kwargs):
-    encoding = kwargs.get('encoding', 'utf-8')
-    sep = kwargs.get('sep', '\n')
-    buf = []
-    for filename in filenames:
-        with io.open(filename, encoding=encoding) as f:
-            buf.append(f.read())
-    return sep.join(buf)
+# def read(*filenames, **kwargs):
+#     encoding = kwargs.get('encoding', 'utf-8')
+#     sep = kwargs.get('sep', '\n')
+#     buf = []
+#     for filename in filenames:
+#         with io.open(filename, encoding=encoding) as f:
+#             buf.append(f.read())
+#     return sep.join(buf)
 
-long_description = read('README.md', 'CHANGES.md')
+# long_description = read('README.md', 'CHANGES.md')
 
 
 # class PyTest(TestCommand):
@@ -36,7 +36,7 @@ long_description = read('README.md', 'CHANGES.md')
 setup(
     name='arfview',
     scripts=['arfview.py'],
-    url='http://github.com/kylerbrown/arfview/',
+    #url='http://github.com/kylerbrown/arfview/',
     license='MIT License',
     author='Kyler Brown',
     #tests_require=['pytest'],
@@ -51,7 +51,7 @@ setup(
     #cmdclass={'test': PyTest},
     author_email='kylerjbrown@gmail.com',
     description='a data visualization program for arf files',
-    long_description=long_description,
+    # long_description=long_description,
     packages=['arfview'],
     # include_package_data=True,
     platforms='any',
