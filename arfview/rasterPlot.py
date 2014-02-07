@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 import numpy as np
 
-class rasterTick(pg.PlotDataItem):
+class rasterTick(pg.GraphItem):
     def __init__(self, toe, trial_number):
         super(rasterTick,self).__init__()
         x = (toe, toe)
@@ -14,17 +14,24 @@ class rasterPlot(pg.PlotItem):
         # if not isinstance(toes, list) or toes.ndim > 1:
         #     raise ValueError('Event times must be given as ndarray of dimension 2 or less')
 
-        self.ntrials = 0
-        for idx,trial_toes in enumerate(toes):
-            self.add_trial(trial_toes)
+        n_toes = sum(len(t) for t in toes)
+        pos = np.zeros((n_toes*2,2)) #array of node positions
+        k=0
+        for trial_idx, trial_toes in enumerate(toes):
+            pos[k:k+len(trial_toes)*2,0] = trial_toes.repeat(2)
+            pos[k:k+len(trial_toes)*2:2,1] = trial_idx - .5
+            pos[k+1:k+len(trial_toes)*2:2,1] = trial_idx + .5
+            k+=len(trial_toes)*2
 
+        adj = np.arange(n_toes*2).reshape(n_toes,2) #connections of graph
+        self.graph_item = pg.GraphItem(pos=pos,adj=adj,size=0)
+        self.addItem(self.graph_item)
         self.setMouseEnabled(y=False)
 
     def add_trial(self, toes):
         self.ntrials += 1
         for idx, t in enumerate(toes):
             self.plot([t,t], [self.ntrials-.5, self.ntrials+.5])
-
        
         
 
