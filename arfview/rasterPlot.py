@@ -19,8 +19,8 @@ class rasterPlot(pg.PlotItem):
         k=0
         for trial_idx, trial_toes in enumerate(toes):
             pos[k:k+len(trial_toes)*2,0] = trial_toes.repeat(2)
-            pos[k:k+len(trial_toes)*2:2,1] = trial_idx - .5
-            pos[k+1:k+len(trial_toes)*2:2,1] = trial_idx + .5
+            pos[k:k+len(trial_toes)*2:2,1] = 1 + trial_idx - .5
+            pos[k+1:k+len(trial_toes)*2:2,1] = 1 + trial_idx + .5
             k+=len(trial_toes)*2
 
         adj = np.arange(n_toes*2).reshape(n_toes,2) #connections of graph
