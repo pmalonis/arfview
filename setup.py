@@ -35,7 +35,7 @@ class PyTest(TestCommand):
 
 setup(
     name='arfview',
-    scripts=['bin/arfview'],
+    entry_points={'console_scripts':'arfview=arfview.mainwin:main'},
     url='http://github.com/kylerbrown/arfview/',
     license='MIT License',
     author='Kyler Brown',
