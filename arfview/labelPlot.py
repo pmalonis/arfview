@@ -6,39 +6,38 @@ import numpy as np
 import arfview.utils as utils
 import h5py
 import arf
+import pyqtgraph.functions as fn
 
 class labelRegion(pg.LinearRegionItem):
-    def __init__(self, name, start, stop, *args, **kwargs):
+    '''Labeled region on label plot'''
+    def __init__(self, name, start, stop, parent, *args, **kwargs):
         super(labelRegion, self).__init__([start, stop], *args, **kwargs)
-        self.text = pg.TextItem(name) 
-        self.parentChanged.connect(self.plot)
-        self.vb = None   #ViewBox when added to plot
-        self.setMovable(False)        
-
-    def plot(self):
-        self.vb = self.getViewBox()
-        if not self.vb: return
-        self.vb.addItem(self.text)
+        parent.addItem(self)        
+        vb = parent.getViewBox()
+        self.text = pg.TextItem(name)
+        vb.addItem(self.text)
         self.position_text_y()
         self.position_text_x()
-        self.vb.sigXRangeChanged.connect(self.position_text_x)
-        self.vb.sigYRangeChanged.connect(self.position_text_y)
+        vb.sigXRangeChanged.connect(self.position_text_x)
+        vb.sigYRangeChanged.connect(self.position_text_y)
         self.sigRegionChanged.connect(self.position_text_x)
+        self.setMovable(False)
         
     def position_text_y(self):
-        if not self.vb: return
-        yrange=self.vb.viewRange()[1]
+        yrange=self.getViewBox().viewRange()[1]
         self.text.setY(np.mean(yrange))
 
     def position_text_x(self):
-        xmin, xmax = self.vb.viewRange()[0]
+        xmin, xmax = self.getViewBox().viewRange()[0]
         if xmin <= self.getRegion()[0] <= xmax:
             self.text.setX(self.getRegion()[0])
         elif self.getRegion()[0] < xmin < self.getRegion()[1]:
             self.text.setX(xmin)
 
             
-class labelPlot(pg.PlotItem): 
+class labelPlot(pg.PlotItem):
+    '''Interactive plot for making and displaying labels'''
+    
     def __init__(self, lbl, *args, **kwargs):
         super(labelPlot, self).__init__(*args, **kwargs)
         if not utils.is_complex_event(lbl):           
@@ -50,6 +49,7 @@ class labelPlot(pg.PlotItem):
         self.installEventFilter(self)
         self.getViewBox().enableAutoRange(enable=False)
         self.key = None
+        self.dclickedRegion = None
         self.activeLabel = None
         if self.lbl.attrs['units'] == 'ms':
             self.scaling_factor = 1000
@@ -60,15 +60,19 @@ class labelPlot(pg.PlotItem):
         for tup in self.lbl:
                 self.plot_complex_event(tup)
 
+        self.setMouseEnabled(y=False)
+
     def plot_complex_event(self, complex_event, with_text=True):
+        '''Plots a single event'''
         name = complex_event['name']
         start = complex_event['start'] / self.scaling_factor
         stop = complex_event['stop'] / self.scaling_factor
-        region = labelRegion(name, start, stop)
-        self.addItem(region)
+        region = labelRegion(name, start, stop, self)
+        
         return region
         
     def sort_lbl(self):
+        '''Sorts lbl dataset by start time'''
         data = self.lbl[:]
         data.sort(order='start')
         self.lbl[:] = data
@@ -103,5 +107,5 @@ class labelPlot(pg.PlotItem):
                 self.activeLabel.setRegion(new_region)
                 self.activeLabel = None
                 self.sort_lbl()
-            
-            
+    
+        

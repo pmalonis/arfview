@@ -9,7 +9,6 @@ import pyqtgraph as pg
 import pyqtgraph.dockarea as pgd
 import h5py
 import numpy as np
-from matplotlib.mlab import specgram
 from scipy.io import wavfile
 import os.path
 import tempfile
@@ -258,8 +257,11 @@ class MainWindow(QtGui.QMainWindow):
             dset_name = 'lbl_%d' %(idx)
             idx += 1
             
-        dset = arf.create_dataset(lbl_parent.getData(), dset_name, data=lbl_rec, units = 'ms',
-                                  maxshape=(None,), datatype=2002)
+        dset = lbl_parent.getData().create_dataset(dset_name,
+                                                   data=lbl_rec,
+                                                   maxshape=(None,))
+        dset.attrs.create('units','ms')
+        dset.attrs.create('datatype',2002)
         self.tree_view.add(dset, parent_node=lbl_parent)
         self.refresh_data_view()
 
@@ -447,6 +449,8 @@ class MainWindow(QtGui.QMainWindow):
             if not masterXLink:
                 masterXLink = pl
             pl.setXLink(masterXLink)
+            pl.getViewBox().setXRange(0,1)
+
 
 ## Make all plots clickable
 lastClicked = []
