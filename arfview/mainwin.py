@@ -449,7 +449,7 @@ class MainWindow(QtGui.QMainWindow):
             if not masterXLink:
                 masterXLink = pl
             pl.setXLink(masterXLink)
-            pl.getViewBox().setXRange(0,1)
+            pl.getViewBox().setRange(xRange=(0,1))
 
 
 ## Make all plots clickable
