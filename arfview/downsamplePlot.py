@@ -22,10 +22,11 @@ class downsamplePlot(pg.PlotItem):
         step=int(np.ceil(npoints/max_points))
         t = np.linspace(t_min, t_max, np.ceil(npoints/float(step)))
         if npoints>0:
-            if len(self.dataset.shape) == 1:
-                self.data_item.setData(t, self.dataset[i_min:i_max:step])
-            else:
-                self.data_item.setData(t, self.dataset[i_min:i_max:step,0])
+                if len(self.dataset.shape) == 1:
+                        self.data_item.setData(t, self.dataset[i_min:i_max:step])
+                elif self.dataset.shape[0] >= self.dataset.shape[1]:
+                        self.data_item.setData(t, self.dataset[i_min:i_max:step,0])
+        
         else:
             self.data_item.clear()
 
