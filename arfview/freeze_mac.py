@@ -1,0 +1,106 @@
+from cx_Freeze import setup, Executable
+import glob
+import shutil
+import subprocess
+import os
+import sys
+import time
+build_dir = 'build/arfview.app/Contents/MacOS' #'build/exe.macosx-10.9-intel-2.7'
+
+def listfiles(directory):
+    files=[os.path.join(dir, f) for dir,_,fname in os.walk(directory) for f in fname]
+#     for path in os.walk(directory):
+#         f = ['/'.join([path[0], p]) for p in path[-1]]
+#         files.extend(f)
+    
+    return files
+
+def copy_dependencies(directory, dest=None):
+    if not dest: dest = directory
+    files = listfiles(directory)
+    for f in files:
+        otool_out = subprocess.check_output('otool -L %s'%(f), shell=True).split()
+        dependencies = [d for d in otool_out if os.path.isfile(d)]
+        subprocess.call('chmod a+rwx %s' %f, shell=True)
+        for d in dependencies:
+            rel_path = d.split('/')[-1]
+            if not os.path.isfile(os.path.join(dest, rel_path)):
+                shutil.copy(d, dest)
+            try:
+                depth=f.count('/')-directory.count('/')
+                if directory[-1] != '/': depth-=1
+                from_loader='../'*depth
+                subprocess.check_output('install_name_tool -change "%s" "@loader_path/%s%s" %s'%(d,from_loader,rel_path,f), shell=True)                   
+#                 if f == 'build/exe.macosx-10.9-intel-2.7/PySide.QtGui.so'
+#                     dep = d
+#                     import pdb;pdb.set_trace()
+
+                print("changed")
+            except:
+                import pdb;pdb.set_trace()
+
+
+#     print("done")
+#     if files != listfiles(directory):
+#         copy_dependencies(directory, dest)
+
+def link_dependencies(directory):
+    subprocess.check_output('otool -L %s'%(f), shell=True).split()
+    
+
+def test():
+    copy_dependencies(build_dir)
+
+def main():
+    # for src in depend_so.split():                                                                               
+    #     if (so.split('/')[-1] not in                                                                            
+    #         os.listdir('build/exe.macosx-10.9-intel-2.7')):                                                     
+    #         shutil.copy(src, 'build/exe.macosx-10.9-intel-2.7')   
+
+    # Dependencies are automatically detected, but it might need
+    # fine tuning.
+
+    pyside_dir = '/home/pmalonis/arfview/arfview/build/exe.macosx-10.9-intel-2.7'
+    pyside_so = glob.glob('%s/*.so'%(pyside_dir))
+    depend_so = ' '.join([subprocess.check_output('otool -L %s'%(so),
+                                        shell=True) for so in pyside_so])
+
+    replace_paths = [('*', '/usr/local/lib')]
+
+    # for src in depend_so.split():
+    #     if (so.split('/')[-1] not in 
+    #         os.listdir('build/exe.macosx-10.9-intel-2.7')):
+    #         shutil.copy(src, 'build/exe.macosx-10.9-intel-2.7')
+
+
+    buildOptions = dict(packages = ['PySide','PySide.QtCore','PySide.QtGui','atexit',
+                                    'numpy','libtfr','arf','arfview', 'scipy','scipy.signal',
+                                    'scipy.interpolate', 'sys', 'os','pyqtgraph','tempfile', 'signal'],
+                        excludes = ["Tkinter", "Tkconstants", "tcl"],
+                        copy_dependent_files=True,
+                        replace_paths=replace_paths,
+                        icon = '/Users/labadmin/image_preview.png')
+
+    base = 'Win32GUI' if sys.platform=='win32' else None
+
+
+    executables = [
+        Executable('mainwin.py', base=base, targetName='arfview')
+    ]
+
+    mac_options = dict(iconfile = '/Users/labadmin/icon.png', bundle_name = 'arfview')
+    try:
+        setup(name='arfview',
+              version = '1.0',
+              description = 't',
+              options = dict(build_exe = buildOptions,
+                             bdist_mac = mac_options),
+              executables = executables)
+    finally:
+        subprocess.call('cp -r /Library/Python/2.7/site-packages/h5py %s' %build_dir, 
+                        shell=True)    
+        copy_dependencies(build_dir)
+
+
+if __name__=='__main__':
+    main()
