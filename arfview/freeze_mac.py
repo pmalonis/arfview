@@ -60,12 +60,12 @@ def main():
     # Dependencies are automatically detected, but it might need
     # fine tuning.
 
-    pyside_dir = '/home/pmalonis/arfview/arfview/build/exe.macosx-10.9-intel-2.7'
-    pyside_so = glob.glob('%s/*.so'%(pyside_dir))
-    depend_so = ' '.join([subprocess.check_output('otool -L %s'%(so),
-                                        shell=True) for so in pyside_so])
+#     pyside_dir = '/home/pmalonis/arfview/arfview/build/exe.macosx-10.9-intel-2.7'
+#     pyside_so = glob.glob('%s/*.so'%(pyside_dir))
+#     depend_so = ' '.join([subprocess.check_output('otool -L %s'%(so),
+#                                         shell=True) for so in pyside_so])
 
-    replace_paths = [('*', '/usr/local/lib')]
+#     replace_paths = [('*', '/usr/local/lib')]
 
     # for src in depend_so.split():
     #     if (so.split('/')[-1] not in 
@@ -77,9 +77,7 @@ def main():
                                     'numpy','libtfr','arf','arfview', 'scipy','scipy.signal',
                                     'scipy.interpolate', 'sys', 'os','pyqtgraph','tempfile', 'signal'],
                         excludes = ["Tkinter", "Tkconstants", "tcl"],
-                        copy_dependent_files=True,
-                        replace_paths=replace_paths,
-                        icon = '/Users/labadmin/image_preview.png')
+                        copy_dependent_files=True)
 
     base = 'Win32GUI' if sys.platform=='win32' else None
 
