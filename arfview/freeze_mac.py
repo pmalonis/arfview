@@ -86,7 +86,7 @@ def main():
         Executable('mainwin.py', base=base, targetName='arfview')
     ]
 
-    mac_options = dict(iconfile = '/Users/labadmin/icon.png', bundle_name = 'arfview')
+    mac_options = dict(iconfile = 'icon.png', bundle_name = 'arfview')
     try:
         setup(name='arfview',
               version = '1.0',
