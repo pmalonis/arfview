@@ -43,6 +43,11 @@ Exporting data:
 
 The "Export Data" tool allows you to export a selected dataset as a .wav or .csv file.
 
+Settings Panel:
+--------------
+
+The settings panel allows you to select what types of plots will be shown and adjust their settings.  
+
 
 
 
