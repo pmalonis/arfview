@@ -3,7 +3,7 @@ Arfview
 
 Arfview is a data visualization program for use with data in the [arf](https://github.com/dmeliza/arf/) format.
 
-![](http://i60.tinypic.com/206xyqc.png)
+![](http://i60.tinypic.com/2rc9vnm.png)
 
 
 Installation (Linux and OS X)
@@ -34,9 +34,9 @@ To plot multiple datasets across entries or files, click the "plot checked mode"
 
 Labeling:
 --------
-To add a label to an existing label dataset, hold down a letter key and click on the plot.  A simple label with the name of the key pressed will be added to the plot at the point in time pressed.  To label an interval, hold down shift and the letter key, click on the plot at the start time of the label, and then click again at the stop time.  
+To add a label to an existing label dataset, hold down a letter key and click on the plot.  A simple label with the name of the key pressed will be added to the plot at the location of the cursor on the time axis.  To label an interval, hold down shift and the letter key, click on the plot at the start time of the label, and then click again at the stop time.  
 
-To add a label dataset, select the entry in which you want the label to be added, add press the "Add label" button on the main toolbar. 
+To add a label dataset, select the entry where you want the label to be added, and press the "Add Label" button on the main toolbar. 
 
 Exporting data:
 --------------
