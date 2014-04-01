@@ -9,7 +9,7 @@ Arfview is a data visualization program for use with data in the [arf](https://g
 Installation (Linux and OS X)
 -----------------------------
 
-A compiled stand-alone application for Linux and OS X can be downloaded from the releases page in this repository.
+A compiled stand-alone application for 64-bit Linux and OS X 10.9 can be downloaded from the releases page in this repository.
 
 
 Building from source (Linux and OS X)
