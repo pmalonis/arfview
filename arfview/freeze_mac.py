@@ -5,14 +5,10 @@ import subprocess
 import os
 import sys
 import time
-build_dir = 'build/arfview.app/Contents/MacOS' #'build/exe.macosx-10.9-intel-2.7'
+build_dir = 'build/arfview.app/Contents/MacOS' 
 
 def listfiles(directory):
-    files=[os.path.join(dir, f) for dir,_,fname in os.walk(directory) for f in fname]
-#     for path in os.walk(directory):
-#         f = ['/'.join([path[0], p]) for p in path[-1]]
-#         files.extend(f)
-    
+    files=[os.path.join(dir, f) for dir,_,fname in os.walk(directory) for f in fname]    
     return files
 
 def copy_dependencies(directory, dest=None):
@@ -31,18 +27,12 @@ def copy_dependencies(directory, dest=None):
                 if directory[-1] != '/': depth-=1
                 from_loader='../'*depth
                 subprocess.check_output('install_name_tool -change "%s" "@loader_path/%s%s" %s'%(d,from_loader,rel_path,f), shell=True)                   
-#                 if f == 'build/exe.macosx-10.9-intel-2.7/PySide.QtGui.so'
-#                     dep = d
-#                     import pdb;pdb.set_trace()
 
                 print("changed")
             except:
                 import pdb;pdb.set_trace()
 
 
-#     print("done")
-#     if files != listfiles(directory):
-#         copy_dependencies(directory, dest)
 
 def link_dependencies(directory):
     subprocess.check_output('otool -L %s'%(f), shell=True).split()
@@ -52,26 +42,6 @@ def test():
     copy_dependencies(build_dir)
 
 def main():
-    # for src in depend_so.split():                                                                               
-    #     if (so.split('/')[-1] not in                                                                            
-    #         os.listdir('build/exe.macosx-10.9-intel-2.7')):                                                     
-    #         shutil.copy(src, 'build/exe.macosx-10.9-intel-2.7')   
-
-    # Dependencies are automatically detected, but it might need
-    # fine tuning.
-
-#     pyside_dir = '/home/pmalonis/arfview/arfview/build/exe.macosx-10.9-intel-2.7'
-#     pyside_so = glob.glob('%s/*.so'%(pyside_dir))
-#     depend_so = ' '.join([subprocess.check_output('otool -L %s'%(so),
-#                                         shell=True) for so in pyside_so])
-
-#     replace_paths = [('*', '/usr/local/lib')]
-
-    # for src in depend_so.split():
-    #     if (so.split('/')[-1] not in 
-    #         os.listdir('build/exe.macosx-10.9-intel-2.7')):
-    #         shutil.copy(src, 'build/exe.macosx-10.9-intel-2.7')
-
 
     buildOptions = dict(packages = ['PySide','PySide.QtCore','PySide.QtGui','atexit',
                                     'numpy','libtfr','arf','arfview', 'scipy','scipy.signal',

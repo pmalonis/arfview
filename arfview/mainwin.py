@@ -374,6 +374,8 @@ class MainWindow(QtGui.QMainWindow):
                     #computing and interpolating image
                     Pxx = libtfr.stft(dataset,w=window,step=t_step)
                     spec = np.log(Pxx.T)
+
+
                     res_factor = 5.0 #factor by which resolution is increased
                     spec = interpolate_spectrogram(spec, res_factor=res_factor)
 
@@ -384,7 +386,6 @@ class MainWindow(QtGui.QMainWindow):
                     color_map = pg.ColorMap(pos,color)
                     lut = color_map.getLookupTable(0.0,1.0,256)
                     img = pg.ImageItem(spec,lut=lut)
-                    #img.setLevels((-5, 10))
 
                     pl = data_layout.addPlot(name=str(len(self.subplots)), row=len(self.subplots), col=0)
                     self.subplots.append(pl)
@@ -527,3 +528,6 @@ def main():
     sys.exit(app.exec_())
     #if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
     #    QtGui.QApplication.instance().exec_()
+
+if __name__=='__main__':
+    main()
