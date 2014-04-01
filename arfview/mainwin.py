@@ -375,8 +375,8 @@ class MainWindow(QtGui.QMainWindow):
                     #computing and interpolating image
                     Pxx = libtfr.stft(dataset,w=window,step=t_step)
                     spec = np.log(Pxx.T)
-                    res_factor = 5.0 #factor by which resolution is increased
-                    spec = interpolate_spectrogram(spec, res_factor=res_factor)
+                    res_factor = 1.0 #factor by which resolution is increased
+#                    spec = interpolate_spectrogram(spec, res_factor=res_factor)
 
                     #making color lookup table
                     pos = np.linspace(0,1,7)
