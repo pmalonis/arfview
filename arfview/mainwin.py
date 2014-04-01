@@ -1,5 +1,6 @@
 """an alpha version of the plotter"""
 
+
 from __future__ import absolute_import, division, \
     print_function
 from PySide import QtGui, QtCore
@@ -374,8 +375,8 @@ class MainWindow(QtGui.QMainWindow):
                     #computing and interpolating image
                     Pxx = libtfr.stft(dataset,w=window,step=t_step)
                     spec = np.log(Pxx.T)
-                    res_factor = 5.0 #factor by which resolution is increased
-                    spec = interpolate_spectrogram(spec, res_factor=res_factor)
+                    res_factor = 1.0 #factor by which resolution is increased
+                    #spec = interpolate_spectrogram(spec, res_factor=res_factor)
 
                     #making color lookup table
                     pos = np.linspace(0,1,7)
@@ -527,3 +528,6 @@ def main():
     sys.exit(app.exec_())
     #if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
     #    QtGui.QApplication.instance().exec_()
+
+if __name__=='__main__':
+    main()
