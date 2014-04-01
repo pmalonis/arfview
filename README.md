@@ -7,7 +7,13 @@ Arfview is a data visualization program for use with data in the [arf](https://g
 
 
 Installation (Linux and OS X)
-------------
+-----------------------------
+
+A compiled stand-alone application for Linux and OS X can be downloaded from the releases page in this repository.
+
+
+Building from source (Linux and OS X)
+--------------------
   * Install [Anaconda](https://store.continuum.io/cshop/anaconda/).
   * In a new terminal window, install arfview:
 
@@ -21,12 +27,7 @@ You may also need build dependencies for PySide and HDF5. In Ubuntu/Debian:
 
     sudo apt-get build-dep python-pyside python-h5py
 
-Starting arfview
-----------------
 
-    arfview
-
-    
 Plot Checked Mode
 -----------------
 
