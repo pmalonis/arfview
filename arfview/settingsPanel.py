@@ -66,6 +66,16 @@ class settingsPanel(QtGui.QWidget):
         self.window.addItem("Hann")
         self.window.addItem("Parzen")
         self.window.setCurrentIndex(4)
+
+        range_layout = QtGui.QHBoxLayout()
+        self.freq_min = QtGui.QLineEdit("0")
+        self.freq_max = QtGui.QLineEdit("10000")
+        range_layout.addWidget(QtGui.QLabel("Frequency Range:"), 0)
+        range_layout.addWidget(self.freq_min, 1)
+        range_layout.addWidget(QtGui.QLabel(" - "), 2)
+        range_layout.addWidget(self.freq_max, 3)
+        range_layout.addWidget(QtGui.QLabel("Hz"), 4)
+
         group_box = QtGui.QGroupBox("Spectrogram Settings")
         layout = QtGui.QGridLayout()
         ledge = 0
@@ -78,6 +88,7 @@ class settingsPanel(QtGui.QWidget):
         layout.addWidget(QtGui.QLabel("ms"), uedge+1, ledge+2)
         layout.addWidget(QtGui.QLabel("Window"), uedge+2, ledge)
         layout.addWidget(self.window, uedge+2, ledge+1)
+        layout.addLayout(range_layout, uedge+3, ledge,1,3)
         layout.setColumnStretch(1,30)
         group_box.setLayout(layout)
     

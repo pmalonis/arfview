@@ -20,7 +20,7 @@ from scipy.interpolate import interp2d
 import scipy.signal
 from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
-from arfview.settingsPanel import settingsPanel
+from settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
 from arfview.downsamplePlot import downsamplePlot
 import arf
@@ -46,7 +46,7 @@ class MainWindow(QtGui.QMainWindow):
 
         # actions
         soundAction = QtGui.QAction(QtGui.QIcon.fromTheme('media-playback-start'),
-                                    'PlaySound', self)
+                                    'Play Sound', self)
         soundAction.setShortcut('Ctrl+S')
         soundAction.setStatusTip('Play data as sound')
         soundAction.triggered.connect(self.playSound)
@@ -203,7 +203,6 @@ class MainWindow(QtGui.QMainWindow):
         if ext not in ('.arf','.hdf5','.h5','.mat'):
             if ext in ('.lbl', '.wav'):
                 temp_h5f = createtemparf(fname)
-
             elif ext in ('.pcm', '.pcm_seq2'):
                 # reversing value and key to access type number from datatype_name
                 sampled_types = {value:key for key,value in named_types.items()
@@ -213,7 +212,8 @@ class MainWindow(QtGui.QMainWindow):
                                                               "Select datatype of file",
                                                               sampled_types.keys())
                 if not ok: return
-            temp_h5f = createtemparf(fname, datatype=sampled_types[datatype_name])
+                temp_h5f = createtemparf(fname, datatype=sampled_types[datatype_name])
+
             fname = temp_h5f.file.filename
             
         print("%s opened" % (fname))
@@ -309,9 +309,9 @@ class MainWindow(QtGui.QMainWindow):
                     
                     pl = downsamplePlot(dataset, title=dataset.name,
                                         name=str(len(self.subplots)))
-                    pl.setXRange(0, dataset.size/float(dataset.attrs['sampling_rate']))
-                    pl.setYRange(np.min(dataset), np.max(dataset))
                     data_layout.addItem(pl,row=len(self.subplots), col=0)
+                    pl.setXRange(0, dataset.size/float(dataset.attrs['sampling_rate']))
+                    pl.setYRange(np.min(dataset), np.max(dataset))                    
                     self.subplots.append(pl)
                     pl.showGrid(x=True, y=True)
 
@@ -365,19 +365,29 @@ class MainWindow(QtGui.QMainWindow):
                     sr = float(dataset.attrs['sampling_rate'])
                     win_size_text = self.settings_panel.win_size.text()
                     t_step_text = self.settings_panel.step.text()
+                    min_text = self.settings_panel.freq_min.text()
+                    max_text = self.settings_panel.freq_max.text()
 
                     if win_size_text:
                         win_size = int(float(win_size_text))
                     else:
                         win_size = 256
                         self.settings_panel.win_size.setText("256")
-
                     if t_step_text:
                         t_step = int(float(t_step_text) * sr/1000.)
                     else:
                         t_step = .001
                         self.settings_panel.win_size.setText("1")
-
+                    if min_text:
+                        freq_min = int(min_text)
+                    else:
+                        freq_min = 0
+                        self.settings_panel.freq_min.setText("0")
+                    if max_text:
+                        freq_max = int(max_text)
+                    else:
+                        freq_max = 10000
+                        self.settings_panel.freq_max.setText("10000")                                        
                     
                     window_name = self.settings_panel.window.currentText()                
                     if window_name == "Hann":
@@ -413,9 +423,12 @@ class MainWindow(QtGui.QMainWindow):
 
                     pl.addItem(img)
                     image_scale = t_step/sr/res_factor
-                    img.setScale(t_step/sr/res_factor)
+                    img.setScale(image_scale)
                     df = sr/float(win_size)
-                    pl.getAxis('left').setScale(df/res_factor/image_scale)
+                    plot_scale = df/res_factor/image_scale
+                    pl.getAxis('left').setScale(plot_scale)
+                    pl.setXRange(0, dataset.size / dataset.attrs['sampling_rate'])
+                    pl.setYRange(freq_min/plot_scale, freq_max/plot_scale)
                     pl.setMouseEnabled(x=True, y=False)
                     
         if toes:
