@@ -13,7 +13,7 @@ import numpy as np
 from scipy.io import wavfile
 import os.path
 import tempfile
-from arfview.datatree import DataTreeView, createtemparf
+from datatree import DataTreeView, createtemparf, named_types
 import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from scipy.interpolate import interp2d
@@ -196,18 +196,37 @@ class MainWindow(QtGui.QMainWindow):
     def showDialog(self):
         fname, fileextension = QtGui.QFileDialog.\
                                getOpenFileName(self, 'Open file', '.',
-                                               '*.arf ;; *.lbl ;; *.hdf5, *.h5 ;; *.mat')
+                                               '*.arf *.hdf5 *.h5 *.mat *.wav *.lbl *.pcm *.pcm_seq2')
         if not fname: return
         print(fileextension)
-        extention = os.path.splitext(fname)[-1]
-        if extention == '.lbl':
-            temp_h5f = createtemparf(fname)
+        ext = os.path.splitext(fname)[-1]
+        if ext not in ('.arf','.hdf5','.h5','.mat'):
+            if ext in ('.lbl', '.wav'):
+                temp_h5f = createtemparf(fname)
+
+            elif ext in ('.pcm', '.pcm_seq2'):
+                # reversing value and key to access type number from datatype_name
+                sampled_types = {value:key for key,value in named_types.items()
+                                 if key > 0 and key < 1000}
+                #import pdb; pdb.set_trace()
+                datatype_name,ok = QtGui.QInputDialog.getItem(self, "",
+                                                              "Select datatype of file",
+                                                              sampled_types.keys())
+                if not ok: return
+            temp_h5f = createtemparf(fname, datatype=sampled_types[datatype_name])
             fname = temp_h5f.file.filename
+            
         print("%s opened" % (fname))
         self.statusBar().showMessage("%s opened" % (fname))
         self.current_file = h5py.File(str(fname))
         self.populateTree()
-        self.current_file_name = fname
+        
+        # selects first entry if first file opened
+        item=self.tree_view.topLevelItem(0)
+        if item.getData().file.filename == fname:
+            #self.selectEntry(item.child(0))
+            self.tree_view.setCurrentItem(item.child(0))
+
 
     def populateTree(self):
         f = self.current_file
@@ -290,6 +309,8 @@ class MainWindow(QtGui.QMainWindow):
                     
                     pl = downsamplePlot(dataset, title=dataset.name,
                                         name=str(len(self.subplots)))
+                    pl.setXRange(0, dataset.size/float(dataset.attrs['sampling_rate']))
+                    pl.setYRange(np.min(dataset), np.max(dataset))
                     data_layout.addItem(pl,row=len(self.subplots), col=0)
                     self.subplots.append(pl)
                     pl.showGrid(x=True, y=True)
@@ -450,7 +471,6 @@ class MainWindow(QtGui.QMainWindow):
             if not masterXLink:
                 masterXLink = pl
             pl.setXLink(masterXLink)
-            pl.getViewBox().setRange(xRange=(0,1))
 
 
 ## Make all plots clickable

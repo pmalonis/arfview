@@ -13,7 +13,8 @@ from dateutil import tz
 import h5py
 import lbl
 import arf
-
+import ewave
+from arfx import io
 
 named_types = {0 : 'UNDEFINED', 1 : 'ACOUSTIC', 2 : 'EXTRAC_HP', 3 : 'EXTRAC_LF',
                4 : 'EXTRAC_EEG', 5 : 'INTRAC_CC', 6 : 'INTRAC_VC',
@@ -41,12 +42,29 @@ def get_str_time(entry):
                                   tz.tzutc()).astimezone(tz.tzlocal())
     return time.strftime('%Y-%m-%d, %H:%M:%S:%f')
 
-def createtemparf(lblfilename):
-    lbl_rec = lbl.read(lblfilename)
-    print(lbl_rec)
+def createtemparf(filename, datatype=0):
+    root, ext = os.path.splitext(filename)
     arffile = arf.open_file(tempfile.mktemp())
-    arf.create_dataset(arffile, os.path.split(lblfilename)[-1], lbl_rec, units='s', datatype=2002)
+    if ext == '.lbl':
+        lbl_rec = lbl.read(filename)
+        print(lbl_rec)
+        arf.create_dataset(arffile, os.path.split(filename)[-1], lbl_rec, units='s', datatype=2002)
+    elif ext == '.wav':
+        wavfile = ewave.open(filename)        
+        arf.create_dataset(arffile, os.path.split(filename)[-1], wavfile.read(),
+                           sampling_rate=wavfile.sampling_rate, datatype=1)
+    elif ext =='.pcm':
+        pcmfile = io.open(filename)
+        arf.create_dataset(arffile, os.path.split(filename)[-1], pcmfile.read(),
+                           sampling_rate=pcmfile.sampling_rate, datatype=datatype)
+    elif ext == '.pcm_seq2':
+        pcmseqfile = io.open(filename)
+        for i in xrange(1,pcmseqfile.nentries+1):
+            pcmseqfile.entry = i
+            arf.create_dataset(arffile, '_'.join([os.path.split(filename)[-1], str(i)]),
+                               pcmseqfile.read(),sampling_rate=pcmseqfile.sampling_rate, datatype=datatype)
     return arffile['/']
+    
 
 class Model():
     '''A data object for the data model,
@@ -104,6 +122,7 @@ class DataTreeView(QtGui.QTreeWidget):
         node = self.add(node_data, parent_node)
         if type(node_data) == h5py.Group:
             sorted_childs = sorted(node_data.values(), cmp=lambda x,y: cmp(x.name, y.name))
+            #sorted_childs = [node_data[k] for k in arf.keys_by_creation(node_data)] 
             [self.recursivePopulateTree(children, node) for children in sorted_childs]
 
     def all_dataset_elements(self):
@@ -122,3 +141,4 @@ class DataTreeView(QtGui.QTreeWidget):
     def all_checked_dataset_elements(self):
         dataset_items = self.all_dataset_elements()
         return [x.getData() for x in dataset_items if x.checkState(0) == Qt.Checked]
+
