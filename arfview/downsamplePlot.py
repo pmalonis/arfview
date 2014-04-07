@@ -26,8 +26,8 @@ class downsamplePlot(pg.PlotItem):
                         self.data_item.setData(t, self.dataset[i_min:i_max:step])
                 elif self.dataset.shape[0] >= self.dataset.shape[1]:
                         self.data_item.setData(t, self.dataset[i_min:i_max:step,0])
-        
+                else:
+                        self.data_item.setData(t, self.dataset[0,i_min:i_max])
         else:
-            self.data_item.clear()
+                self.data_item.clear()
 
-    

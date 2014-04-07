@@ -39,7 +39,7 @@ class _checkMultipleWindow(QtGui.QDialog):
         self.value_menu = QtGui.QComboBox()
         self.attribute_menu = attributeMenu(self.tree_view, self.value_menu)
         
-        self.ok_button=QtGui.QPushButton("Ok")
+        self.ok_button=QtGui.QPushButton("OK")
         self.ok_button.pressed.connect(self.button_pressed)
         
         ledge=0

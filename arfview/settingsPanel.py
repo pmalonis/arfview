@@ -4,9 +4,14 @@ import pyqtgraph as pg
 
 class settingsPanel(QtGui.QWidget):
     def __init__(self):
-        super(settingsPanel, self).__init__()
-        self.initUI()
-
+        super(settingsPanel, self).__init__()       
+        self.defaults = {'psth_bin':10,
+                         'isi_bin':10,
+                         'win_size':512,
+                         'step':10,
+                         'freq_min':0,
+                         'freq_max':10000}
+        self.initUI() 
     def initUI(self):
         
         layout = QtGui.QVBoxLayout()
@@ -17,9 +22,9 @@ class settingsPanel(QtGui.QWidget):
         self.label_check=QtGui.QCheckBox("Label")
         self.label_check.setCheckState(QtCore.Qt.CheckState.Checked)
         self.psth_check=QtGui.QCheckBox("PSTH")
-        self.psth_bin_size = QtGui.QLineEdit('10')
+        self.psth_bin_size = QtGui.QLineEdit(str(self.defaults['psth_bin']))
         self.isi_check=QtGui.QCheckBox("ISI")
-        self.isi_bin_size = QtGui.QLineEdit('10')
+        self.isi_bin_size = QtGui.QLineEdit(str(self.defaults['isi_bin']))
         self.spectrogram_check=QtGui.QCheckBox("Spectrogram")
         self.spectrogram_box = self.create_spectrogram_box()
 
@@ -56,8 +61,8 @@ class settingsPanel(QtGui.QWidget):
 
     def create_spectrogram_box(self):
         self.spectrogram_check.setCheckState(QtCore.Qt.CheckState.Checked)
-        self.win_size = QtGui.QLineEdit("256")
-        self.step = QtGui.QLineEdit("1")
+        self.win_size = QtGui.QLineEdit(str(self.defaults['win_size']))
+        self.step = QtGui.QLineEdit(str(self.defaults['step']))
         self.window = QtGui.QComboBox()        
         self.window.addItem("Bartlett")
         self.window.addItem("Blackman")
@@ -68,8 +73,8 @@ class settingsPanel(QtGui.QWidget):
         self.window.setCurrentIndex(4)
 
         range_layout = QtGui.QHBoxLayout()
-        self.freq_min = QtGui.QLineEdit("0")
-        self.freq_max = QtGui.QLineEdit("10000")
+        self.freq_min = QtGui.QLineEdit(str(self.defaults['freq_min']))
+        self.freq_max = QtGui.QLineEdit(str(self.defaults['freq_max']))
         range_layout.addWidget(QtGui.QLabel("Frequency Range:"), 0)
         range_layout.addWidget(self.freq_min, 1)
         range_layout.addWidget(QtGui.QLabel(" - "), 2)

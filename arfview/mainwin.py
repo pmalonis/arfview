@@ -20,7 +20,7 @@ from scipy.interpolate import interp2d
 import scipy.signal
 from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
-from settingsPanel import settingsPanel
+from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
 from arfview.downsamplePlot import downsamplePlot
 import arf
@@ -63,7 +63,7 @@ class MainWindow(QtGui.QMainWindow):
         openAction.triggered.connect(self.showDialog)
 
         exportAction = QtGui.QAction(QtGui.QIcon.fromTheme('document-save-as'),
-                                    'Export data', self)
+                                    'Export checked', self)
         exportAction.setShortcut('Ctrl+e')
         exportAction.setStatusTip('Export dataset as wav')
         exportAction.triggered.connect(self.export)
@@ -176,19 +176,23 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def export(self):
-        item = self.tree_view.currentItem().getData()
-        savedir, filename = os.path.split(item.file.filename)
-        savepath =  os.path.join(savedir,
-                                 os.path.splitext(filename)[0] + '_' + item.name.replace('/','_'))
+        items = self.tree_view.all_checked_dataset_elements()
+        if not items: return
+        savedir, filename = os.path.split(items[0].file.filename)
+        savepath =  os.path.join(savedir,os.path.splitext(filename)[0]
+                                 + '_' + items[0].name.replace('/','_'))
         print(savepath)
-        if type(item) == h5py._hl.dataset.Dataset:
-            print('die')
-            fname, fileextension = QtGui.QFileDialog.\
-                                   getSaveFileName(self, 'Save data as',
-                                                   savepath,
-                                                   'wav (*.wav);;text (*.csv, *.dat)')
-            export(item, fileextension.split(' ')[0], fname)
-
+        fname, fileextension = QtGui.QFileDialog.\
+                               getSaveFileName(self, 'Save data as',
+                                               savepath,
+                                               'wav (*.wav);;text (*.csv, *.dat)')
+        for i,item in enumerate(items):
+            if 'datatype' in item.attrs.keys() and item.attrs['datatype'] < 1000:
+                if i:
+                    fname =  os.path.join(savedir,os.path.splitext(filename)[0]
+                                          + '_' + item.name.replace('/','_'))
+                export(item, fileextension.split(' ')[0], fname)
+                
     def playSound(self):
         item = self.tree_view.currentItem().getData()
         playSound(item)
@@ -371,23 +375,23 @@ class MainWindow(QtGui.QMainWindow):
                     if win_size_text:
                         win_size = int(float(win_size_text))
                     else:
-                        win_size = 256
-                        self.settings_panel.win_size.setText("256")
+                        win_size = self.settings_panel.defaults['win_size']
+                        self.settings_panel.win_size.setText(str(win_size))
                     if t_step_text:
                         t_step = int(float(t_step_text) * sr/1000.)
                     else:
-                        t_step = .001
-                        self.settings_panel.win_size.setText("1")
+                        t_step = self.settings_panel.defaults['step']
+                        self.settings_panel.win_size.setText(str(int(tstep*1000)))
                     if min_text:
                         freq_min = int(min_text)
                     else:
-                        freq_min = 0
-                        self.settings_panel.freq_min.setText("0")
+                        freq_min = self.settings_panel.defaults['freq_min']
+                        self.settings_panel.freq_min.setText(str(freq_min))
                     if max_text:
                         freq_max = int(max_text)
                     else:
-                        freq_max = 10000
-                        self.settings_panel.freq_max.setText("10000")                                        
+                        freq_max = self.settings_panel.defaults['freq_max']
+                        self.settings_panel.freq_max.setText(str(freq_max))                                        
                     
                     window_name = self.settings_panel.window.currentText()                
                     if window_name == "Hann":
@@ -519,7 +523,7 @@ def playSound(data):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    os.system('vlc ' + tfile + ' &')
+    os.system('play ' + tfile)
 
 
 def populateAttrTable(table, item):
