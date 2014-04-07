@@ -4,14 +4,15 @@ import shutil
 import subprocess
 import os
 import sys
+import traceback
 # Dependencies are automatically detected, but it might need
 # fine tuning.
 
-buildOptions = dict(packages = ['PySide','atexit','numpy','libtfr','arf','arfview',
-                                'scipy','sys','os','pyqtgraph','h5py','tempfile', 'signal'],
+sys.path.append('/usr/lib/python2.7/')
+buildOptions = dict(packages= ['PySide','atexit','numpy','libtfr','arf','arfview',
+                                'scipy','sys','os','pyqtgraph','tempfile', 'signal','traceback'],
                     excludes = ["Tkinter", "Tkconstants", "tcl"],
                     copy_dependent_files=True,
-                    path=['/Library/Python/2.7/site-packages/h5py']
 )
 
 base = 'Win32GUI' if sys.platform=='win32' else None
