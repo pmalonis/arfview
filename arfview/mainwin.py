@@ -13,7 +13,7 @@ import numpy as np
 from scipy.io import wavfile
 import os.path
 import tempfile
-from datatree import DataTreeView, createtemparf, named_types
+from arfview.datatree import DataTreeView, createtemparf, named_types
 import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from scipy.interpolate import interp2d
