@@ -18,7 +18,7 @@ base = 'Win32GUI' if sys.platform=='win32' else None
         
 
 executables = [
-    Executable('mainwin.py', base=base, targetName='arfview')
+    Executable('../arfview/mainwin.py', base=base, targetName='arfview')
 ]
 
 try:
@@ -29,7 +29,7 @@ try:
           executables = executables)
 
 finally:
-    pyside_dir = '/home/pmalonis/arfview/arfview/build/exe.linux-x86_64-2.7'
+    pyside_dir = '/home/pmalonis/arfview/freeze/build/exe.linux-x86_64-2.7'
     pyside_so = glob.glob('%s/*.so'%(pyside_dir))
     depend_so = ' '.join([subprocess.check_output('ldd %s'%(so),
                                         shell=True) for so in pyside_so])
