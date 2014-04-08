@@ -198,9 +198,22 @@ class MainWindow(QtGui.QMainWindow):
         playSound(item)
 
     def showDialog(self):
+        extensions = '*.arf *.hdf5 *.h5 *.mat *.wav *.lbl'
+        #added because not all of arfx compiles on OS X
+#         try:
+#             from arfx import pcmio
+#             extensions += ' *.pcm'
+#         except ImportError:
+#             pass
+
+#         try:
+#             from arfx import pcmseqio
+#             extensions += ' *.pcm_seq2'
+#         except ImportError:
+#             pass
+
         fname, fileextension = QtGui.QFileDialog.\
-                               getOpenFileName(self, 'Open file', '.',
-                                               '*.arf *.hdf5 *.h5 *.mat *.wav *.lbl *.pcm *.pcm_seq2')
+                               getOpenFileName(self, 'Open file', '.', extensions)
         if not fname: return
         print(fileextension)
         ext = os.path.splitext(fname)[-1]
@@ -211,7 +224,6 @@ class MainWindow(QtGui.QMainWindow):
                 # reversing value and key to access type number from datatype_name
                 sampled_types = {value:key for key,value in named_types.items()
                                  if key > 0 and key < 1000}
-                #import pdb; pdb.set_trace()
                 datatype_name,ok = QtGui.QInputDialog.getItem(self, "",
                                                               "Select datatype of file",
                                                               sampled_types.keys())
