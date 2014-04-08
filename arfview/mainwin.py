@@ -200,17 +200,17 @@ class MainWindow(QtGui.QMainWindow):
     def showDialog(self):
         extensions = '*.arf *.hdf5 *.h5 *.mat *.wav *.lbl'
         #added because not all of arfx compiles on OS X
-#         try:
-#             from arfx import pcmio
-#             extensions += ' *.pcm'
-#         except ImportError:
-#             pass
+        try:
+            from arfx import pcmio
+            extensions += ' *.pcm'
+        except ImportError:
+            pass
 
-#         try:
-#             from arfx import pcmseqio
-#             extensions += ' *.pcm_seq2'
-#         except ImportError:
-#             pass
+        try:
+            from arfx import pcmseqio
+            extensions += ' *.pcm_seq2'
+        except ImportError:
+            pass
 
         fname, fileextension = QtGui.QFileDialog.\
                                getOpenFileName(self, 'Open file', '.', extensions)
