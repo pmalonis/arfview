@@ -155,7 +155,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.setCentralWidget(self.area)
         self.setWindowTitle('arfview')
-        self.resize(1200, 700)
+        self.resize(1300, 700)
         self.show()
 
     def toggleplotchecked(self):

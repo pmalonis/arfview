@@ -8,7 +8,7 @@ class settingsPanel(QtGui.QWidget):
         self.defaults = {'psth_bin':10,
                          'isi_bin':10,
                          'win_size':512,
-                         'step':10,
+                         'step':1,
                          'freq_min':0,
                          'freq_max':10000}
         self.initUI() 
