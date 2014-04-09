@@ -14,7 +14,7 @@ import h5py
 import lbl
 import arf
 import ewave
-from arfx import io
+from arfx import pcmio,pcmseqio
 
 named_types = {0 : 'UNDEFINED', 1 : 'ACOUSTIC', 2 : 'EXTRAC_HP', 3 : 'EXTRAC_LF',
                4 : 'EXTRAC_EEG', 5 : 'INTRAC_CC', 6 : 'INTRAC_VC',
@@ -54,11 +54,11 @@ def createtemparf(filename, datatype=0):
         arf.create_dataset(arffile, os.path.split(filename)[-1], wavfile.read(),
                            sampling_rate=wavfile.sampling_rate, datatype=1)
     elif ext =='.pcm':
-        pcmfile = io.open(filename)
+        pcmfile = pcmio.open(filename)
         arf.create_dataset(arffile, os.path.split(filename)[-1], pcmfile.read(),
                            sampling_rate=pcmfile.sampling_rate, datatype=datatype)
     elif ext == '.pcm_seq2':
-        pcmseqfile = io.open(filename)
+        pcmseqfile = pcmseqio.open(filename)
         for i in xrange(1,pcmseqfile.nentries+1):
             pcmseqfile.entry = i
             arf.create_dataset(arffile, '_'.join([os.path.split(filename)[-1], str(i)]),
