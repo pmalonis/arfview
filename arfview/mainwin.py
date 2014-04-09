@@ -206,12 +206,6 @@ class MainWindow(QtGui.QMainWindow):
         except ImportError:
             pass
 
-        try:
-            from arfx import pcmseqio
-            extensions += ' *.pcm_seq2'
-        except ImportError:
-            pass
-
         fname, fileextension = QtGui.QFileDialog.\
                                getOpenFileName(self, 'Open file', '.', extensions)
         if not fname: return

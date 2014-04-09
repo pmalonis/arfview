@@ -57,13 +57,6 @@ def createtemparf(filename, datatype=0):
         pcmfile = pcmio.open(filename)
         arf.create_dataset(arffile, os.path.split(filename)[-1], pcmfile.read(),
                            sampling_rate=pcmfile.sampling_rate, datatype=datatype)
-    elif ext == '.pcm_seq2':
-        from arfx import pcmseqio
-        pcmseqfile = pcmseqio.open(filename)
-        for i in xrange(1,pcmseqfile.nentries+1):
-            pcmseqfile.entry = i
-            arf.create_dataset(arffile, '_'.join([os.path.split(filename)[-1], str(i)]),
-                               pcmseqfile.read(),sampling_rate=pcmseqfile.sampling_rate, datatype=datatype)
     return arffile['/']
     
 
