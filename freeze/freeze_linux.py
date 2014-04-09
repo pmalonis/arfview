@@ -10,7 +10,7 @@ import traceback
 
 sys.path.append('/usr/lib/python2.7/')
 buildOptions = dict(packages= ['PySide','atexit','numpy','libtfr','arf','arfview',
-                                'scipy','sys','os','pyqtgraph','tempfile', 'signal','traceback'],
+                                'scipy','sys','os','pyqtgraph','tempfile', 'signal', 'arfx','ewave'],
                     excludes = ["Tkinter", "Tkconstants", "tcl"],
                     copy_dependent_files=True,
 )
