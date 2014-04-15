@@ -530,7 +530,7 @@ def playSound(data):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    sp = subprocess.Popen(['which', 'play'], stdout=subprocess.PIPE)
+    sp = subprocess.Popen(['/usr/bin/which', 'play'], stdout=subprocess.PIPE)
     play_abspath = sp.communicate()[0].split()[0]
     subprocess.Popen([play_abspath, tfile])
 
