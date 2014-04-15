@@ -196,7 +196,7 @@ class MainWindow(QtGui.QMainWindow):
                 
     def playSound(self):
         item = self.tree_view.currentItem().getData()
-        playSound(item)
+        playSound(item, self)
 
     def showDialog(self):
         extensions = '*.arf *.hdf5 *.h5 *.mat *.wav *.lbl'
@@ -524,14 +524,15 @@ def export(dataset, export_format='wav', savepath=None):
         np.savetxt(savepath + '.csv', dataset)
 
 
-def playSound(data):
+def playSound(data, mainWin):
     print('writing wav file')
     tfile = tempfile.mktemp() + '_' + data.name.replace('/', '_') + '.wav'
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    sp = subprocess.Popen(['/usr/bin/which', 'play'], stdout=subprocess.PIPE)
+    sp = subprocess.Popen(['/usr/bin/which', 'play'], stdout=subprocess.PIPE,shell=False)
     play_abspath = sp.communicate()[0].split()[0]
+    mainWin.settings_panel.freq_max.setText(play_abspath)
     subprocess.Popen([play_abspath, tfile])
 
 def populateAttrTable(table, item):
