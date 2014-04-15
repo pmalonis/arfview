@@ -530,7 +530,7 @@ def playSound(data):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    subprocess.call('play %s' %(tfile))
+    subprocess.call(['play', tfile])
 
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
