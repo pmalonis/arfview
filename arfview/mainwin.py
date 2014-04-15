@@ -25,6 +25,7 @@ from arfview.rasterPlot import rasterPlot
 from arfview.downsamplePlot import downsamplePlot
 import arf
 import libtfr
+import subprocess
 
 import lbl
 #print(lbl.__version__)
@@ -529,8 +530,7 @@ def playSound(data):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    os.system('play ' + tfile)
-
+    subprocess.call('play ' + tfile, shell=True)
 
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
