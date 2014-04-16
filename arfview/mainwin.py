@@ -25,7 +25,7 @@ from arfview.rasterPlot import rasterPlot
 from arfview.downsamplePlot import downsamplePlot
 import arf
 import libtfr
-import pyglet
+import subprocess
 
 import lbl
 #print(lbl.__version__)
@@ -530,8 +530,11 @@ def playSound(data, mainWin):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    sound = pyglet.media.load(tfile)
-    sound.play()
+    sp = subprocess.Popen(['/usr/bin/which', 'play'], stdout=subprocess.PIPE)
+    play_path = sp.stdout.read().split()[0]
+    if not play_path:
+        play_path = '/usr/local/bin/play'
+    subprocess.Popen([play_abspath, tfile])
 
 def populateAttrTable(table, item):
     """Populate QTableWidget with attribute values of hdf5 item ITEM"""
