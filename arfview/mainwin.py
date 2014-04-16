@@ -533,7 +533,7 @@ def playSound(data, mainWin):
     paths = os.environ['PATH'].split(':')
     for p in paths:
         play_path = ''.join([p, '/play'])
-        if os.exists(play_path):
+        if os.path.exists(play_path):
             subprocess.Popen([play_path, tfile])
             break
             
