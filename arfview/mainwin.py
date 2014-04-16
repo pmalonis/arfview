@@ -530,7 +530,8 @@ def playSound(data, mainWin):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    #paths = os.environ['PATH'].split(':')
+    # can't access PATH environment variable with frozen app,
+    # so hardcoding most likely sox paths
     paths = ['/usr/local/bin', '/opt/local/bin', '/usr/bin']
     for p in paths:
         play_path = ''.join([p, '/play'])
