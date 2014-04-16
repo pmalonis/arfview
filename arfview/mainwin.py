@@ -530,7 +530,7 @@ def playSound(data, mainWin):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    sound = pylget.media.load(tfile)
+    sound = pyglet.media.load(tfile)
     sound.play()
 
 def populateAttrTable(table, item):
