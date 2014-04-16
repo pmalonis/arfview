@@ -530,9 +530,9 @@ def playSound(data, mainWin):
     normed_data = np.int16(data/np.max(np.abs(data.value)) * 32767)
     wavfile.write(tfile, data.attrs['sampling_rate'],
                   normed_data)
-    sp = subprocess.Popen(['/usr/bin/which', 'play'], stdout=subprocess.PIPE,shell=False)
-    play_abspath = sp.communicate()[0].split()[0]
-    mainWin.settings_panel.freq_max.setText(play_abspath)
+    sp = subprocess.Popen(['/usr/bin/which', 'play'], stdout=subprocess.PIPE)
+    play_abspath = sp.stdout.read().split()[0]
+    mainWin.settings_panel.freq_min.setText(play_abspath)
     subprocess.Popen([play_abspath, tfile])
 
 def populateAttrTable(table, item):
