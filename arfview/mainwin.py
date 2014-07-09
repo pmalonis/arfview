@@ -23,6 +23,7 @@ from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
 from arfview.downsamplePlot import downsamplePlot
+from spectrogram import spectrogram
 import arf
 import libtfr
 import subprocess
@@ -130,7 +131,10 @@ class MainWindow(QtGui.QMainWindow):
         self.attr_table.setHorizontalHeaderLabels(('key','value'))
 
         #plot region
+        self.plot_scroll_area = QtGui.QScrollArea()
         self.data_layout = pg.GraphicsLayoutWidget()
+        self.data_layout.setFixedSize(1000,700)
+        self.plot_scroll_area.setWidget(self.data_layout)
         self.subplots=[]
 
         #settings panel
@@ -149,7 +153,7 @@ class MainWindow(QtGui.QMainWindow):
         tree_dock.addWidget(self.tree_view)
         tree_dock.addWidget(self.tree_toolbar)
         tree_dock.addAction(exitAction)
-        data_dock.addWidget(self.data_layout)
+        data_dock.addWidget(self.plot_scroll_area)
         attr_table_dock.addWidget(self.attr_table)
         settings_dock.addWidget(self.settings_panel)
         self.settings_panel.show()
@@ -273,7 +277,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelAction.setVisible(True)
         else:
             self.labelAction.setVisible(False)
-            
+
     def add_label(self):
         item = self.tree_view.currentItem()
         if isinstance(item.getData(), h5py.Group):
@@ -314,7 +318,7 @@ class MainWindow(QtGui.QMainWindow):
                 continue
 
             '''sampled data'''
-            if dataset.attrs['datatype'] < 1000: # sampled data
+            if dataset.attrs.get('datatype') < 1000: # sampled data
                 if (self.settings_panel.oscillogram_check.checkState()
                     ==QtCore.Qt.Checked): 
                     
@@ -328,9 +332,9 @@ class MainWindow(QtGui.QMainWindow):
 
                 ''' simple events '''
             elif utils.is_simple_event(dataset):
-                if dataset.attrs['units'] == 'ms':
+                if dataset.attrs.get('units') == 'ms':
                     data = dataset.value / 1000.
-                elif dataset.attrs['units'] == 'samples':
+                elif dataset.attrs.get('units') == 'samples':
                     data = dataset.value / dataset.attrs['sampling_rate']
                 else:
                     data = dataset.value
@@ -369,78 +373,14 @@ class MainWindow(QtGui.QMainWindow):
                 continue
 
             '''adding spectrograms'''
-            if dataset.attrs['datatype'] in [0, 1]: # show spectrogram
+            if dataset.attrs.get('datatype') in [0, 1]: # show spectrogram
                 if (self.settings_panel.spectrogram_check.checkState()
                     ==QtCore.Qt.Checked):
-                    #getting spectrogram settings
-                    sr = float(dataset.attrs['sampling_rate'])
-                    win_size_text = self.settings_panel.win_size.text()
-                    t_step_text = self.settings_panel.step.text()
-                    min_text = self.settings_panel.freq_min.text()
-                    max_text = self.settings_panel.freq_max.text()
-
-                    if win_size_text:
-                        win_size = int(float(win_size_text))
-                    else:
-                        win_size = self.settings_panel.defaults['win_size']
-                        self.settings_panel.win_size.setText(str(win_size))
-                    if t_step_text:
-                        t_step = int(float(t_step_text) * sr/1000.)
-                    else:
-                        t_step = self.settings_panel.defaults['step']
-                        self.settings_panel.win_size.setText(str(int(tstep*1000)))
-                    if min_text:
-                        freq_min = int(min_text)
-                    else:
-                        freq_min = self.settings_panel.defaults['freq_min']
-                        self.settings_panel.freq_min.setText(str(freq_min))
-                    if max_text:
-                        freq_max = int(max_text)
-                    else:
-                        freq_max = self.settings_panel.defaults['freq_max']
-                        self.settings_panel.freq_max.setText(str(freq_max))                                        
-                    
-                    window_name = self.settings_panel.window.currentText()                
-                    if window_name == "Hann":
-                        window = scipy.signal.hann(win_size)
-                    elif window_name == "Bartlett":
-                        window = scipy.signal.bartlett(win_size)
-                    elif window_name == "Blackman":
-                        window = scipy.signal.blackman(win_size)
-                    elif window_name == "Boxcar":
-                        window = scipy.signal.boxcar(win_size)
-                    elif window_name == "Hamming":
-                        window = scipy.signal.hamming(win_size)
-                    elif window_name == "Parzen":
-                        window = scipy.signal.parzen(win_size)
-                    
-                    #computing and interpolating image
-                    Pxx = libtfr.stft(dataset,w=window,step=t_step)
-                    spec = np.log(Pxx.T)
-                    res_factor = 1.0 #factor by which resolution is increased
-#                    spec = interpolate_spectrogram(spec, res_factor=res_factor)
-
-                    #making color lookup table
-                    pos = np.linspace(0,1,7)
-                    color = np.array([[100,100,255,255],[0,0,255,255],[0,255,255,255],[0,255,0,255],
-                                      [255,255,0,255],[255,0,0,255],[100,0,0,255]], dtype=np.ubyte)
-                    color_map = pg.ColorMap(pos,color)
-                    lut = color_map.getLookupTable(0.0,1.0,256)
-                    img = pg.ImageItem(spec,lut=lut)
-                    #img.setLevels((-5, 10))
-
-                    pl = data_layout.addPlot(name=str(len(self.subplots)), row=len(self.subplots), col=0)
+                    pl = spectrogram(dataset, self.settings_panel)
+                    data_layout.addItem(pl, row=len(self.subplots), col=0)
+                    print (pl)
                     self.subplots.append(pl)
 
-                    pl.addItem(img)
-                    image_scale = t_step/sr/res_factor
-                    img.setScale(image_scale)
-                    df = sr/float(win_size)
-                    plot_scale = df/res_factor/image_scale
-                    pl.getAxis('left').setScale(plot_scale)
-                    pl.setXRange(0, dataset.size / dataset.attrs['sampling_rate'])
-                    pl.setYRange(freq_min/plot_scale, freq_max/plot_scale)
-                    pl.setMouseEnabled(x=True, y=False)
                     
         if toes:
             if self.settings_panel.raster_check.checkState()==QtCore.Qt.Checked:
