@@ -8,11 +8,18 @@ class downsamplePlot(pg.PlotItem):
         self.data_item = pg.PlotDataItem()
         self.downsample()
         self.addItem(self.data_item)
-        self.getViewBox().sigXRangeChanged.connect(self.downsample)
-
+        vb = self.getViewBox()
+        vb.sigXRangeChanged.connect(self.downsample)
+        #setting maximum view range (can only be used in version 9.9 of pyqtgraph)
+        # max = np.max(dataset)
+        # min = np.min(dataset)
+        # maxYRange = 10 * (max - min)
+        # vb.setLimits(yMax=max+maxYRange,yMin=min-maxYRange,
+        #              maxYRange=maxYRange)
+        
     def downsample(self):
         sr = float(self.dataset.attrs['sampling_rate'])
-        t_min,t_max = self.getAxis('bottom').range
+        t_min,t_max = self.getViewBox().viewRange()[0]
         t_min = max(0, t_min)
         t_max = min(self.dataset.len()/sr, t_max)
         i_min = int(t_min*sr)
