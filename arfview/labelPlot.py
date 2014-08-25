@@ -18,9 +18,6 @@ class labelRegion(pg.LinearRegionItem):
         parent.addItem(self.text)
         self.position_text_y()
         self.position_text_x()
-        vb.sigXRangeChanged.connect(self.position_text_x)
-        vb.sigYRangeChanged.connect(self.position_text_y)
-        self.sigRegionChanged.connect(self.position_text_x)
         self.setMovable(False)
         
     def position_text_y(self):
@@ -28,11 +25,14 @@ class labelRegion(pg.LinearRegionItem):
         self.text.setY(np.mean(yrange))
 
     def position_text_x(self):
-        xmin, xmax = self.getViewBox().viewRange()[0]
-        if xmin <= self.getRegion()[0] <= xmax:
-            self.text.setX(self.getRegion()[0])
-        elif self.getRegion()[0] < xmin < self.getRegion()[1]:
-            self.text.setX(xmin)
+        if self.getViewBox() is None:
+            print(self.getRegion())
+        else:
+            xmin, xmax = self.getViewBox().viewRange()[0]
+            if xmin <= self.getRegion()[0] <= xmax:
+                self.text.setX(self.getRegion()[0])
+            elif self.getRegion()[0] < xmin < self.getRegion()[1]:
+                self.text.setX(xmin)
 
             
 class labelPlot(pg.PlotItem):
@@ -71,20 +71,17 @@ class labelPlot(pg.PlotItem):
                           stops[i]>t_min),0)
         last_idx = next((i for i in xrange(len(self.lbl)-1,0,-1)
                     if starts[i]<t_max),first_idx)
-
         n = last_idx - first_idx
-        print(last_idx,first_idx)
         #labels that will be plotted
         if n > self.max_plotted:
             plotted_idx = (first_idx + int(np.ceil(i*n/self.max_plotted))
                            for i in xrange(self.max_plotted) )
         else:
             plotted_idx = xrange(first_idx,last_idx+1)
-        k=0
         for i in plotted_idx:
             self.plot_complex_event(self.lbl[i])
-            k+=1
-        print(k)
+
+        self.setActive(True)
             
     def plot_complex_event(self, complex_event, with_text=True):
         '''Plots a single event'''
@@ -103,11 +100,17 @@ class labelPlot(pg.PlotItem):
         
     def keyPressEvent(self, event):
         if event.text().isalpha():
+            event.accept()
             self.key = event.text().lower()
+        else:
+            event.ignore()
 
     def keyReleaseEvent(self, event):
         if event.text().lower() == self.key:
+            event.accept()
             self.key = None
+        else:
+            event.ignore()
             
     def mouseClickEvent(self, event):
         if event.button() == Qt.LeftButton:
