@@ -12,9 +12,9 @@ class labelRegion(pg.LinearRegionItem):
     '''Labeled region on label plot'''
     def __init__(self, name, start, stop, parent, *args, **kwargs):
         super(labelRegion, self).__init__([start, stop], *args, **kwargs)
-        parent.addItem(self)        
-        vb = parent.getViewBox()
+        parent.addItem(self)  
         self.text = pg.TextItem(name)
+        self.text.setScale(2)
         parent.addItem(self.text)
         self.position_text_y()
         self.position_text_x()
