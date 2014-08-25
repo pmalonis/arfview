@@ -15,7 +15,7 @@ class labelRegion(pg.LinearRegionItem):
         parent.addItem(self)        
         vb = parent.getViewBox()
         self.text = pg.TextItem(name)
-        vb.addItem(self.text)
+        parent.addItem(self.text)
         self.position_text_y()
         self.position_text_x()
         vb.sigXRangeChanged.connect(self.position_text_x)
@@ -57,11 +57,35 @@ class labelPlot(pg.PlotItem):
             self.scaling_factor = self.lbl.attrs['sampling_rate']
         else:
             self.scaling_factor = 1
-        for tup in self.lbl:
-                self.plot_complex_event(tup)
-
         self.setMouseEnabled(y=False)
+        self.max_plotted = 100
+        self.getViewBox().sigXRangeChanged.connect(self.plot_all_events)
+        self.plot_all_events()
+        
+    def plot_all_events(self):
+        self.clear()
+        t_min,t_max = self.getAxis('bottom').range
+        starts = self.lbl['start']
+        stops = self.lbl['stop']
+        first_idx = next((i for i in xrange(len(self.lbl)) if
+                          stops[i]>t_min),0)
+        last_idx = next((i for i in xrange(len(self.lbl)-1,0,-1)
+                    if starts[i]<t_max),first_idx)
 
+        n = last_idx - first_idx
+        print(last_idx,first_idx)
+        #labels that will be plotted
+        if n > self.max_plotted:
+            plotted_idx = (first_idx + int(np.ceil(i*n/self.max_plotted))
+                           for i in xrange(self.max_plotted) )
+        else:
+            plotted_idx = xrange(first_idx,last_idx+1)
+        k=0
+        for i in plotted_idx:
+            self.plot_complex_event(self.lbl[i])
+            k+=1
+        print(k)
+            
     def plot_complex_event(self, complex_event, with_text=True):
         '''Plots a single event'''
         name = complex_event['name']
@@ -79,10 +103,10 @@ class labelPlot(pg.PlotItem):
         
     def keyPressEvent(self, event):
         if event.text().isalpha():
-            self.key = event.text().upper()
+            self.key = event.text().lower()
 
     def keyReleaseEvent(self, event):
-        if event.text().upper() == self.key:
+        if event.text().lower() == self.key:
             self.key = None
             
     def mouseClickEvent(self, event):
@@ -109,3 +133,4 @@ class labelPlot(pg.PlotItem):
                 self.sort_lbl()
     
         
+    
