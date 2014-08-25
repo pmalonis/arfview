@@ -24,6 +24,7 @@ from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
 from arfview.downsamplePlot import downsamplePlot
 from spectrogram import spectrogram
+from plotScrollArea import plotScrollArea
 import arf
 import libtfr
 import subprocess
@@ -131,9 +132,9 @@ class MainWindow(QtGui.QMainWindow):
         self.attr_table.setHorizontalHeaderLabels(('key','value'))
 
         #plot region
-        self.plot_scroll_area = QtGui.QScrollArea()
+        self.plot_scroll_area = plotScrollArea(parent=self)
         self.data_layout = pg.GraphicsLayoutWidget()
-        self.data_layout.setFixedSize(1000,700)
+        self.data_layout.setFixedSize(900,600)
         self.plot_scroll_area.setWidget(self.data_layout)
         self.subplots=[]
 
@@ -325,8 +326,8 @@ class MainWindow(QtGui.QMainWindow):
                     pl = downsamplePlot(dataset, title=dataset.name,
                                         name=str(len(self.subplots)))
                     data_layout.addItem(pl,row=len(self.subplots), col=0)
-                    pl.setXRange(0, dataset.size/float(dataset.attrs['sampling_rate']))
-                    pl.setYRange(np.min(dataset), np.max(dataset))                    
+                    pl.setXRange(0, dataset.size/float(dataset.attrs['sampling_rate']),padding=0)
+                    pl.setYRange(np.min(dataset), np.max(dataset),padding=0)                    
                     self.subplots.append(pl)
                     pl.showGrid(x=True, y=True)
 
