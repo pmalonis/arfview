@@ -10,7 +10,7 @@ import pyqtgraph.functions as fn
 
 class labelRegion(pg.LinearRegionItem):
     '''Labeled region on label plot'''
-    def __init__(self, name, start, stop, parent, *args, **kwargs):
+    def __init__(self, name, start, stop, parent, line_color=None,*args, **kwargs):
         super(labelRegion, self).__init__([start, stop], *args, **kwargs)
         parent.addItem(self)  
         self.text = pg.TextItem(name)
@@ -19,6 +19,9 @@ class labelRegion(pg.LinearRegionItem):
         self.position_text_y()
         self.position_text_x()
         self.setMovable(False)
+        if line_color is not None:
+            for line,color in zip(self.lines,line_color):
+                line.setPen(fn.mkPen(color))
         
     def position_text_y(self):
         yrange=self.getViewBox().viewRange()[1]
@@ -36,7 +39,11 @@ class labelRegion(pg.LinearRegionItem):
 
             
 class labelPlot(pg.PlotItem):
-    '''Interactive plot for making and displaying labels'''
+    '''Interactive plot for making and displaying labels
+
+    Parameters:
+    lbl - complex label dataset
+    '''
     
     def __init__(self, lbl, *args, **kwargs):
         super(labelPlot, self).__init__(*args, **kwargs)
@@ -46,6 +53,7 @@ class labelPlot(pg.PlotItem):
             raise TypeError("Argument must have maxshape (None,)")
         else:
              self.lbl = lbl
+        self.double_clicked = np.zeros(len(self.lbl),dtype=bool)
         self.installEventFilter(self)
         self.getViewBox().enableAutoRange(enable=False)
         self.key = None
@@ -60,11 +68,13 @@ class labelPlot(pg.PlotItem):
         self.setMouseEnabled(y=False)
         self.max_plotted = 100
         self.getViewBox().sigXRangeChanged.connect(self.plot_all_events)
+        self.setActive(True)
         self.plot_all_events()
         
     def plot_all_events(self):
         self.clear()
         t_min,t_max = self.getAxis('bottom').range
+        names = self.lbl['name']
         starts = self.lbl['start']
         stops = self.lbl['stop']
         first_idx = next((i for i in xrange(len(self.lbl)) if
@@ -78,25 +88,42 @@ class labelPlot(pg.PlotItem):
                            for i in xrange(self.max_plotted) )
         else:
             plotted_idx = xrange(first_idx,last_idx+1)
-        for i in plotted_idx:
-            self.plot_complex_event(self.lbl[i])
 
-        self.setActive(True)
+        #Keeps track of previous label so that if the stop of a red label equals
+        #the start of the next, the red line from
+        #the previous label won't be drawn over
+        prev_was_clicked = False
+        prev_stop = None
+        for i in plotted_idx:
+            if self.double_clicked[i]:
+                line_color = ['r','r']
+                prev_was_clicked = True
+            elif prev_was_clicked and prev_stop == self.lbl[i]['start']:
+                line_color = ['y','r']
+                prev_was_clicked = False
+            else:
+                line_color = None
+                prev_was_clicked = False
+                
+            self.plot_complex_event(self.lbl[i],line_color=line_color)
+            prev_stop = self.lbl[i]['stop']
             
-    def plot_complex_event(self, complex_event, with_text=True):
+    def plot_complex_event(self, complex_event, line_color=None, with_text=True):
         '''Plots a single event'''
         name = complex_event['name']
         start = complex_event['start'] / self.scaling_factor
         stop = complex_event['stop'] / self.scaling_factor
-        region = labelRegion(name, start, stop, self)
+        region = labelRegion(name, start, stop, parent=self, line_color=line_color)
         
         return region
         
     def sort_lbl(self):
         '''Sorts lbl dataset by start time'''
         data = self.lbl[:]
+        sort_idx = data.argsort(order='start')
         data.sort(order='start')
         self.lbl[:] = data
+        self.double_clicked = self.double_clicked[sort_idx]
         
     def keyPressEvent(self, event):
         if event.text().isalpha():
@@ -135,5 +162,23 @@ class labelPlot(pg.PlotItem):
                 self.activeLabel = None
                 self.sort_lbl()
     
+            
+    def mouseDoubleClickEvent(self, event):
+        pos = event.scenePos()
+        vb = self.getViewBox()
+        pixel_margin = 2
+        for i,(start,stop) in enumerate(zip(self.lbl['start'],self.lbl['stop'])):
+            scene_start =  vb.mapViewToScene(QPointF(start/self.scaling_factor,0)).x()
+            scene_stop = vb.mapViewToScene(QPointF(stop/self.scaling_factor,0)).x()
+            if scene_start - pixel_margin < pos.x() < scene_stop + pixel_margin:
+                self.double_clicked[i] = not self.double_clicked[i]
+            else:
+                self.double_clicked[i] = False
+
+        self.plot_all_events()
+        if any(self.double_clicked):
+            event.accept()
+        else:
+            event.ignore()
+
         
-    
