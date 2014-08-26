@@ -296,7 +296,7 @@ class MainWindow(QtGui.QMainWindow):
         dset = lbl_parent.getData().create_dataset(dset_name,
                                                    data=lbl_rec,
                                                    maxshape=(None,))
-        dset.attrs.create('units','ms')
+        dset.attrs.create('units','s')
         dset.attrs.create('datatype',2002)
         self.tree_view.add(dset, parent_node=lbl_parent)
         self.refresh_data_view()
@@ -361,7 +361,7 @@ class MainWindow(QtGui.QMainWindow):
                         dataset = arf.create_dataset(group, name, data,
                                                      maxshape=(None,),**attributes)
 
-                    pl = labelPlot(dataset, title=dataset.name, name=str(len(self.subplots)))
+                    pl = labelPlot(dataset.file,dataset.name, title=dataset.name, name=str(len(self.subplots)))
                     data_layout.addItem(pl, row=len(self.subplots), col=0) 
                     pl.showLabel('left', show=False)
                     self.subplots.append(pl)

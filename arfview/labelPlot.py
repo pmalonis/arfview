@@ -3,7 +3,8 @@ from PySide.QtCore import *
 import sys
 import pyqtgraph as pg
 import numpy as np
-import arfview.utils as utils
+from utils import replace_dataset
+import utils as utils
 import h5py
 import arf
 import pyqtgraph.functions as fn
@@ -44,15 +45,22 @@ class labelPlot(pg.PlotItem):
     Parameters:
     lbl - complex label dataset
     '''
+    sigLabelSelected = Signal()
+    sigNoLabelSelected = Signal()
     
-    def __init__(self, lbl, *args, **kwargs):
+    def __init__(self, file, path, *args, **kwargs):
         super(labelPlot, self).__init__(*args, **kwargs)
+        lbl = file[path]
         if not utils.is_complex_event(lbl):           
             raise TypeError("Argument must be complex event dataset")
         elif lbl.maxshape != (None,):
             raise TypeError("Argument must have maxshape (None,)")
         else:
              self.lbl = lbl
+        #saving the file and the path allows access to non-anonymous reference to
+        #the dataset, which is necessary for deleting labels
+        self.file = file
+        self.path = path          
         self.double_clicked = np.zeros(len(self.lbl),dtype=bool)
         self.installEventFilter(self)
         self.getViewBox().enableAutoRange(enable=False)
@@ -68,15 +76,15 @@ class labelPlot(pg.PlotItem):
         self.setMouseEnabled(y=False)
         self.max_plotted = 100
         self.getViewBox().sigXRangeChanged.connect(self.plot_all_events)
-        self.setActive(True)
         self.plot_all_events()
         
     def plot_all_events(self):
         self.clear()
+        if len(self.lbl) == 0: return 
         t_min,t_max = self.getAxis('bottom').range
         names = self.lbl['name']
-        starts = self.lbl['start']
-        stops = self.lbl['stop']
+        starts = self.lbl['start']/self.scaling_factor
+        stops = self.lbl['stop']/self.scaling_factor
         first_idx = next((i for i in xrange(len(self.lbl)) if
                           stops[i]>t_min),0)
         last_idx = next((i for i in xrange(len(self.lbl)-1,0,-1)
@@ -107,6 +115,8 @@ class labelPlot(pg.PlotItem):
                 
             self.plot_complex_event(self.lbl[i],line_color=line_color)
             prev_stop = self.lbl[i]['stop']
+
+        self.setActive(True)
             
     def plot_complex_event(self, complex_event, line_color=None, with_text=True):
         '''Plots a single event'''
@@ -124,11 +134,29 @@ class labelPlot(pg.PlotItem):
         data.sort(order='start')
         self.lbl[:] = data
         self.double_clicked = self.double_clicked[sort_idx]
-        
+
+    def delete_selected_labels(self):
+        # reply = QMessageBox.question(self,"","Delete selected labels?",
+        #                              QMessageBox.Yes | QMessageBox.No,
+        #                              QMessageBox.No)
+#        if reply == QMessageBox.Yes:
+        new_data = self.lbl[np.negative(self.double_clicked)]
+        lbl = self.file[self.path] #non-anonymous lbl entry
+        replace_dataset(lbl, lbl.parent, data=new_data, maxshape=(None,))
+        self.lbl = self.file[self.path]
+        self.double_clicked = np.zeros(len(self.lbl),dtype=bool)
+        self.plot_all_events()
+
     def keyPressEvent(self, event):
+        print(event.key())
+        print(self.double_clicked)
         if event.text().isalpha():
             event.accept()
             self.key = event.text().lower()
+        elif (event.key() in (Qt.Key_Delete, Qt.Key_Backspace) #delete label
+              and np.any(self.double_clicked)):
+            event.accept()
+            self.delete_selected_labels()
         else:
             event.ignore()
 
@@ -145,7 +173,8 @@ class labelPlot(pg.PlotItem):
             t = pos.x() * self.scaling_factor
             if self.key and not self.activeLabel:
                 arf.append_data(self.lbl, (self.key, t, t))
-                self.activeLabel = self.plot_complex_event(self.lbl[-1]) 
+                self.activeLabel = self.plot_complex_event(self.lbl[-1])
+                self.double_clicked = np.zeros(len(self.lbl),dtype=bool)
                 if event.modifiers() != Qt.ShiftModifier:
                     self.sort_lbl()
                     self.activeLabel = None
@@ -164,6 +193,8 @@ class labelPlot(pg.PlotItem):
     
             
     def mouseDoubleClickEvent(self, event):
+        if self.activeLabel: return
+        previously_clicked = self.double_clicked
         pos = event.scenePos()
         vb = self.getViewBox()
         pixel_margin = 2
@@ -172,13 +203,14 @@ class labelPlot(pg.PlotItem):
             scene_stop = vb.mapViewToScene(QPointF(stop/self.scaling_factor,0)).x()
             if scene_start - pixel_margin < pos.x() < scene_stop + pixel_margin:
                 self.double_clicked[i] = not self.double_clicked[i]
-            else:
-                self.double_clicked[i] = False
-
+                
         self.plot_all_events()
-        if any(self.double_clicked):
+        if any(self.double_clicked) and not any(previously_clicked):
             event.accept()
-        else:
+            if not any(previously_clicked):
+                self.sigLabelSelected.emit()
+        elif not any(self.double_clicked):
             event.ignore()
+            if any(previously_clicked):
+                self.sigNoLabelSelected.emit()
 
-        
