@@ -136,17 +136,23 @@ class labelPlot(pg.PlotItem):
         self.double_clicked = self.double_clicked[sort_idx]
 
     def delete_selected_labels(self):
-        # reply = QMessageBox.question(self,"","Delete selected labels?",
-        #                              QMessageBox.Yes | QMessageBox.No,
-        #                              QMessageBox.No)
-#        if reply == QMessageBox.Yes:
-        new_data = self.lbl[np.negative(self.double_clicked)]
-        lbl = self.file[self.path] #non-anonymous lbl entry
-        replace_dataset(lbl, lbl.parent, data=new_data, maxshape=(None,))
-        self.lbl = self.file[self.path]
-        self.double_clicked = np.zeros(len(self.lbl),dtype=bool)
-        self.plot_all_events()
-
+        win = self.parentWidget().getViewWidget()
+        reply = QMessageBox.question(win,"","Delete selected labels?",
+                                     QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.No)
+        try:
+            if reply == QMessageBox.Yes:
+                new_data = self.lbl[np.negative(self.double_clicked)]
+                lbl = self.file[self.path] #non-anonymous lbl entry
+                replace_dataset(lbl, lbl.parent, data=new_data, maxshape=(None,))
+                self.lbl = self.file[self.path]
+                self.double_clicked = np.zeros(len(self.lbl),dtype=bool)
+                self.plot_all_events()
+                self.sigNoLabelSelected.emit()
+        except:
+            QMessageBox.critical(win,"", "Could not delete label. Make sure you have write permission for this file.", QMessageBox.Ok)
+            
+                
     def keyPressEvent(self, event):
         print(event.key())
         print(self.double_clicked)
@@ -194,7 +200,7 @@ class labelPlot(pg.PlotItem):
             
     def mouseDoubleClickEvent(self, event):
         if self.activeLabel: return
-        previously_clicked = self.double_clicked
+        previously_clicked = list(self.double_clicked)
         pos = event.scenePos()
         vb = self.getViewBox()
         pixel_margin = 2

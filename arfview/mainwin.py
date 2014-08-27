@@ -85,12 +85,18 @@ class MainWindow(QtGui.QMainWindow):
         refreshAction.triggered.connect(self.refresh_data_view)
 
         labelAction = QtGui.QAction(QtGui.QIcon.fromTheme('insert-object'),
-                                      'Add Label', self)
+                                      'Add Labels', self)
         labelAction.setVisible(False)
         labelAction.setShortcut('Ctrl+l')
         labelAction.setStatusTip('Add label entry to current group')
         labelAction.triggered.connect(self.add_label)
         self.labelAction = labelAction
+
+        deleteLabelAction = QtGui.QAction('Delete Label', self)
+        deleteLabelAction.setVisible(False)
+        deleteLabelAction.setShortcut('Ctrl+d')
+        deleteLabelAction.setStatusTip('Add label entry to current group')
+        self.deleteLabelAction = deleteLabelAction
 
         addPlotAction = QtGui.QAction('Add Plot', self)
         addPlotAction.setVisible(False)
@@ -116,6 +122,7 @@ class MainWindow(QtGui.QMainWindow):
         self.toolbar.addAction(plotcheckedAction)
         self.toolbar.addAction(refreshAction)
         self.toolbar.addAction(labelAction)
+        self.toolbar.addAction(deleteLabelAction)
         self.toolbar.addAction(addPlotAction)
 
         # file tree
@@ -301,6 +308,12 @@ class MainWindow(QtGui.QMainWindow):
         self.tree_view.add(dset, parent_node=lbl_parent)
         self.refresh_data_view()
 
+    def label_selected(self):
+        self.deleteLabelAction.setVisible(True)
+
+    def label_unselected(self):
+        self.deleteLabelAction.setVisible(False)
+        
     def plot_dataset_list(self, dataset_list, data_layout, append=False):
         ''' plots a list of datasets to a data layout'''
         data_layout.clear()
@@ -364,6 +377,9 @@ class MainWindow(QtGui.QMainWindow):
                     pl = labelPlot(dataset.file,dataset.name, title=dataset.name, name=str(len(self.subplots)))
                     data_layout.addItem(pl, row=len(self.subplots), col=0) 
                     pl.showLabel('left', show=False)
+                    pl.sigLabelSelected.connect(self.label_selected)
+                    pl.sigNoLabelSelected.connect(self.label_unselected)
+                    self.deleteLabelAction.triggered.connect(pl.delete_selected_labels)
                     self.subplots.append(pl)
 
             else:
