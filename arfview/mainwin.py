@@ -334,8 +334,7 @@ class MainWindow(QtGui.QMainWindow):
             '''sampled data'''
             if dataset.attrs.get('datatype') < 1000: # sampled data
                 if (self.settings_panel.oscillogram_check.checkState()
-                    ==QtCore.Qt.Checked): 
-                    
+                    ==QtCore.Qt.Checked):                     
                     pl = downsamplePlot(dataset, title=dataset.name,
                                         name=str(len(self.subplots)))
                     data_layout.addItem(pl,row=len(self.subplots), col=0)
@@ -362,18 +361,6 @@ class MainWindow(QtGui.QMainWindow):
             elif utils.is_complex_event(dataset):
                 if (self.settings_panel.label_check.checkState()
                     ==QtCore.Qt.Checked):
-                
-                    #creating new extensible dataset if not extensible
-                    if dataset.maxshape != (None,):
-                        data = dataset[:]
-                        name = dataset.name
-                        group= dataset.parent
-                        attributes = dataset.attrs
-                        del group[name]
-                        del dataset
-                        dataset = arf.create_dataset(group, name, data,
-                                                     maxshape=(None,),**attributes)
-
                     pl = labelPlot(dataset.file,dataset.name, title=dataset.name, name=str(len(self.subplots)))
                     data_layout.addItem(pl, row=len(self.subplots), col=0) 
                     pl.showLabel('left', show=False)

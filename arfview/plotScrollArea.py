@@ -15,17 +15,23 @@ class plotScrollArea(QtGui.QScrollArea):
             event.accept()
             for pl in self.parent.subplots:
                 if pl.isUnderMouse():
-                    ax = pl.getAxis('bottom')
-                    min,max = ax.range
+                    min,max = pl.getViewBox().viewRange()[0]
                     range = max - min
-                    if event.key() == QtCore.Qt.Key_Up:
+                    if event.key() == QtCore.Qt.Key_Down:
                         pl.setXRange(min - range/2., max + range/2., padding=0)
-                    elif event.key() == QtCore.Qt.Key_Down:
+                    elif event.key() == QtCore.Qt.Key_Up:
                         pl.setXRange(min + range/4., max - range/4., padding=0)
                     elif event.key() == QtCore.Qt.Key_Left:
-                        pl.setXRange(min - range, max - range, padding=0)
+                        if event.modifiers() ==QtCore.Qt.ControlModifier:
+                            pl.setXRange(min - range/2., max - range/2., padding=0)
+                        else:
+                            pl.setXRange(min - range, max - range, padding=0)
                     elif event.key() == QtCore.Qt.Key_Right:
-                        pl.setXRange(min + range, max + range, padding=0)
+                        if event.modifiers() == QtCore.Qt.ControlModifier:
+                            pl.setXRange(min + range/2., max + range/2., padding=0)
+                        else:
+                            pl.setXRange(min + range, max + range, padding=0)
+
 
                     break
                     

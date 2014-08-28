@@ -24,13 +24,14 @@ def replace_dataset(dataset, parent, **kwargs):
         k+=1
         temp_name = '_'.join([name, 'temp', str(k)])
 
+    try:
+        new_dset = parent.create_dataset(temp_name,**kwargs)
+        for key,value in dataset.attrs.items():
+            new_dset.attrs.create(key,value)
+    except:
+        del parent[temp_name]
 
-    new_dset = parent.create_dataset(temp_name,**kwargs)
-    for key,value in dataset.attrs.items():
-        new_dset.attrs.create(key,value)
-
-
-    del parent[dataset.name]
+    del parent[name]
     while name in parent.keys():
         pass
     parent[name] = parent[temp_name]
