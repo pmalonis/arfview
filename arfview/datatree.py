@@ -47,7 +47,9 @@ def createtemparf(filename, datatype=0):
     if ext == '.lbl':
         lbl_rec = lbl.read(filename)
         print(lbl_rec)
-        arf.create_dataset(arffile, os.path.split(filename)[-1], lbl_rec, units='s', datatype=2002)
+        dset = arf.create_dataset(arffile, os.path.split(filename)[-1],
+                                  lbl_rec, units=['','s','s'], datatype=2002)
+        dset.attrs['units'] = 's'
     elif ext == '.wav':
         wavfile = ewave.open(filename)        
         arf.create_dataset(arffile, os.path.split(filename)[-1], wavfile.read(),
