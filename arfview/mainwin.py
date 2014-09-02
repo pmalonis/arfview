@@ -22,9 +22,9 @@ from labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
-from downsamplePlot import downsamplePlot
-from spectrogram import spectrogram
-from plotScrollArea import plotScrollArea
+from arfview.downsamplePlot import downsamplePlot
+from arfview.spectrogram import spectrogram
+from arfview.plotScrollArea import plotScrollArea
 import arf
 import libtfr
 import subprocess
