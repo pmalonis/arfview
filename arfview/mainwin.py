@@ -338,7 +338,10 @@ class MainWindow(QtGui.QMainWindow):
                     pl = downsamplePlot(dataset, title=dataset.name,
                                         name=str(len(self.subplots)))
                     data_layout.addItem(pl,row=len(self.subplots), col=0)
-                    pl.setXRange(0, dataset.size/float(dataset.attrs['sampling_rate']),padding=0)
+                    max_default_range = 20
+                    xmax = min(dataset.size/float(dataset.attrs['sampling_rate']),
+                               max_default_range)
+                    pl.setXRange(0, xmax,padding=0)
                     pl.setYRange(np.min(dataset), np.max(dataset),padding=0)                    
                     self.subplots.append(pl)
                     pl.showGrid(x=True, y=True)
