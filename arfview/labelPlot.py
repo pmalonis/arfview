@@ -62,7 +62,6 @@ class labelPlot(pg.PlotItem):
         self.key = None
         self.dclickedRegion = None
         self.activeLabel = None
-        self.space_pressed = False
         if self.lbl.attrs['units'] == 'ms':
             self.scaling_factor = 1000
         elif self.lbl.attrs['units'] == 'samples':
@@ -192,14 +191,12 @@ class labelPlot(pg.PlotItem):
     def keyPressEvent(self, event):
         if event.text().isalpha():
             event.accept()
-            if self.space_pressed:
-                name = event.text().lower()
+            self.key = event.text().lower()
+        elif event.key() == Qt.Key_Space:
+            if self.key is not None:
+                name = self.key
                 start, stop = self.getViewBox().viewRange()[0]
                 self.add_label(name,start,stop)
-            else:
-                self.key = event.text().lower()
-        elif event.key() == Qt.Key_Space:
-            self.space_pressed = True
         else:
             event.ignore()
 
@@ -207,8 +204,6 @@ class labelPlot(pg.PlotItem):
         if event.text().lower() == self.key:
             event.accept()
             self.key = None
-        elif event.key() == Qt.Key_Space:
-            self.space_pressed = False
         else:
             event.ignore()
             
@@ -233,8 +228,6 @@ class labelPlot(pg.PlotItem):
                 self.plot_all_events()
                 self.activeLabel = None
 
-    
-            
     def mouseDoubleClickEvent(self, event):
         if self.activeLabel: return
         previously_clicked = list(self.double_clicked)
