@@ -18,7 +18,7 @@ import arfview.utils as utils
 QtCore.qInstallMsgHandler(lambda *args: None) # suppresses PySide 1.2.1 bug
 from scipy.interpolate import interp2d
 import scipy.signal
-from labelPlot import labelPlot
+from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
