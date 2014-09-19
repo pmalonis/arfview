@@ -22,7 +22,7 @@ from arfview.labelPlot import labelPlot
 from arfview.treeToolBar import treeToolBar
 from arfview.settingsPanel import settingsPanel
 from arfview.rasterPlot import rasterPlot
-from arfview.downsamplePlot import downsamplePlot
+from downsamplePlot import downsamplePlot
 from arfview.spectrogram import spectrogram
 from arfview.plotScrollArea import plotScrollArea
 import arf
@@ -380,7 +380,7 @@ class MainWindow(QtGui.QMainWindow):
                 continue
 
             '''adding spectrograms'''
-            if dataset.attrs.get('datatype') in [0, 1]: # show spectrogram
+            if dataset.attrs.get('datatype') == 1: # show spectrogram
                 if (self.settings_panel.spectrogram_check.checkState()
                     ==QtCore.Qt.Checked):
                     pl = spectrogram(dataset, self.settings_panel)
