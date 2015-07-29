@@ -21,7 +21,7 @@ Building from source (Linux and OS X)
         cd arfview
         python setup.py install
 
-To have audio playback, install [sox](http://sox.sourceforge.net/)
+To enable audio playback, install [sox](http://sox.sourceforge.net/)
 
 You may also need build dependencies for PySide and HDF5. In Ubuntu/Debian:
 
